@@ -256,6 +256,21 @@ model AiAuditEntry {
   @@map("ai_audit_entries")
 }
 
+/// Срез планировщика веток для продолжения ExecutionPlan между сообщениями (RAI chat thread).
+model RaiPlannerThreadState {
+  id        String   @id @default(cuid())
+  companyId String
+  threadId  String
+  sliceJson Json
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([companyId, threadId], name: "rai_planner_thread_state_company_thread_unique")
+  @@index([companyId])
+  @@map("rai_planner_thread_states")
+}
+
 model ExpertReview {
   id                    String    @id @default(cuid())
   companyId             String

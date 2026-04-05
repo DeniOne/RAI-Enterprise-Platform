@@ -5,6 +5,11 @@ import {
   RoutingDomain,
 } from "./semantic-routing.types";
 import { CompositeWorkflowPlan } from "./composite-orchestration.types";
+import type {
+  ExecutionPlan,
+  ExecutionSurfaceState,
+  SubIntentGraph,
+} from "./execution-target-state.types";
 
 export type SemanticIngressInteractionMode =
   | "free_chat"
@@ -27,9 +32,9 @@ export type SemanticIngressRiskClass =
 export type SemanticIngressFrameSource =
   | "clarification_resume"
   | "explicit_tool_call"
-  | "legacy_contracts"
-  | "semantic_router_primary"
-  | "semantic_router_shadow";
+  | "fallback_normalization"
+  | "semantic_route_primary"
+  | "semantic_route_shadow";
 
 export type SemanticIngressOperationAuthority =
   | "direct_user_command"
@@ -137,8 +142,17 @@ export interface SemanticIngressRequestedOperation {
   ownerRole: string | null;
   intent: string | null;
   toolName: RaiToolName | null;
+  payload?: Record<string, unknown> | null;
   decisionType: DecisionType;
   source: SemanticIngressFrameSource;
+}
+
+/** ≥2 явных `toolCalls` без composite/TechMap — срез для multi-branch SubIntentGraph. */
+export interface SemanticIngressExplicitPlannerToolCall {
+  toolName: RaiToolName;
+  ownerRole: string | null;
+  intent: string | null;
+  payload: Record<string, unknown>;
 }
 
 export interface SemanticIngressFrame {
@@ -159,4 +173,9 @@ export interface SemanticIngressFrame {
   proofSliceId?: string | null;
   compositePlan?: CompositeWorkflowPlan | null;
   techMapFrame?: TechMapSemanticFrame | null;
+  /** Заполняется в `buildFrame` при ≥2 `finalRequestedToolCalls` без composite-стадий и без TechMap. */
+  explicitPlannerToolCalls?: SemanticIngressExplicitPlannerToolCall[] | null;
+  subIntentGraph?: SubIntentGraph | null;
+  executionPlan?: ExecutionPlan | null;
+  executionSurface?: ExecutionSurfaceState | null;
 }

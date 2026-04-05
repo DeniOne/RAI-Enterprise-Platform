@@ -53,6 +53,12 @@ import { RuntimeGovernancePolicyService } from "../runtime-governance/runtime-go
 import { RuntimeGovernanceFeatureFlagsService } from "../runtime-governance/runtime-governance-feature-flags.service";
 import { SemanticRouterService } from "../semantic-router/semantic-router.service";
 import { SemanticIngressService } from "../semantic-ingress.service";
+import { BranchSchedulerService } from "../planner/branch-scheduler.service";
+import { BranchStatePlaneService } from "../branch-state-plane.service";
+import type { SemanticIngressFrame } from "../../../shared/rai-chat/semantic-ingress.types";
+import type { CompositeWorkflowStageContract } from "../../../shared/rai-chat/composite-orchestration.types";
+import { DecisionType } from "../../../shared/rai-chat/semantic-routing.types";
+import { ConfidenceBand } from "../../../shared/rai-chat/semantic-routing.types";
 
 type JsonRecord = Record<string, unknown>;
 
@@ -66,6 +72,7 @@ interface InMemoryPrismaState {
   systemIncidents: Array<JsonRecord>;
   pendingActions: Array<JsonRecord>;
   qualityAlerts: Array<JsonRecord>;
+  autonomyOverrides: Array<JsonRecord>;
   harvestPlans: Array<JsonRecord>;
   agroEscalations: Array<JsonRecord>;
 }
@@ -244,10 +251,18 @@ const createPrismaMock = (state: InMemoryPrismaState) => ({
       state.pendingActions.push(row);
       return row;
     }),
+    findFirst: jest.fn(async ({ where }: { where?: JsonRecord }) =>
+      state.pendingActions.find((row) => matchesWhere(row, where)) ?? null,
+    ),
   },
   qualityAlert: {
     findFirst: jest.fn(async ({ where }: { where?: JsonRecord }) =>
       state.qualityAlerts.find((row) => matchesWhere(row, where)) ?? null,
+    ),
+  },
+  autonomyOverride: {
+    findFirst: jest.fn(async ({ where }: { where?: JsonRecord }) =>
+      state.autonomyOverrides.find((row) => matchesWhere(row, where)) ?? null,
     ),
   },
   harvestPlan: {
@@ -331,6 +346,7 @@ const baseRegistryState = (): InMemoryPrismaState => ({
   systemIncidents: [],
   pendingActions: [],
   qualityAlerts: [],
+  autonomyOverrides: [],
   harvestPlans: [
     {
       id: "plan-1",
@@ -417,6 +433,15 @@ describe("Runtime spine integration", () => {
         },
       },
     }),
+    getTrustBudget: jest.fn().mockReturnValue({
+      maxTrackedBranches: 4,
+      maxCrossCheckBranches: 1,
+      latencyBudgetMs: {
+        happyPathMs: 300,
+        multiSourceReadMs: 800,
+        crossCheckTriggeredMs: 1_500,
+      },
+    }),
     resolveTrustLatencyBudgetMs: jest
       .fn()
       .mockImplementation((_role: string, profile: string) => {
@@ -488,14 +513,14 @@ describe("Runtime spine integration", () => {
       latencyMs: 1,
       sliceId: null,
       promotedPrimary: false,
-      executionPath: "semantic_router_shadow",
+      executionPath: "semantic_route_shadow",
       requestedToolCalls: [],
       classification: {
         targetRole: null,
         intent: null,
         toolName: null,
         confidence: 0,
-        method: "semantic_router_shadow",
+        method: "semantic_route_shadow",
         reason: "mock",
       },
       routingContext: {
@@ -687,6 +712,8 @@ describe("Runtime spine integration", () => {
         { provide: RuntimeGovernanceFeatureFlagsService, useValue: runtimeGovernanceFeatureFlagsMock },
         { provide: SemanticRouterService, useValue: semanticRouterMock },
         SemanticIngressService,
+        BranchSchedulerService,
+        BranchStatePlaneService,
       ],
     }).compile();
 
@@ -774,7 +801,7 @@ describe("Runtime spine integration", () => {
         agentExecution: {
           role: "agronomist",
           status: "COMPLETED",
-          executionPath: "tool_call_primary",
+          executionPath: "explicit_tool_path",
           text: "Первичный агро-ответ.",
           structuredOutput: {
             summary: "Первичная ветка",
@@ -811,7 +838,7 @@ describe("Runtime spine integration", () => {
         agentExecution: {
           role: "knowledge",
           status: "COMPLETED",
-          executionPath: "tool_call_primary",
+          executionPath: "explicit_tool_path",
           text: "Knowledge cross-check подтверждает ограниченно.",
           structuredOutput: {
             summary: "Knowledge cross-check",
@@ -1029,5 +1056,1072 @@ describe("Runtime spine integration", () => {
     expect(prismaState.aiAuditEntries).toHaveLength(1);
     expect(prismaState.traceSummaries).toHaveLength(1);
     expect(prismaState.systemIncidents).toHaveLength(0);
+  });
+
+  describe("Planner sequential multi-tick e2e", () => {
+    const graphId = "g_cp-e2e-seq4_na";
+
+    function makeSequential4BranchFrame(): SemanticIngressFrame {
+      const stages: CompositeWorkflowStageContract[] = [
+        {
+          stageId: "s0",
+          order: 0,
+          agentRole: "agronomist",
+          intent: "e0",
+          toolName: RaiToolName.EchoMessage,
+          label: "l0",
+          dependsOn: [],
+          status: "planned",
+        },
+        {
+          stageId: "s1",
+          order: 1,
+          agentRole: "agronomist",
+          intent: "e1",
+          toolName: RaiToolName.EchoMessage,
+          label: "l1",
+          dependsOn: ["s0"],
+          status: "planned",
+        },
+        {
+          stageId: "s2",
+          order: 2,
+          agentRole: "agronomist",
+          intent: "e2",
+          toolName: RaiToolName.EchoMessage,
+          label: "l2",
+          dependsOn: ["s1"],
+          status: "planned",
+        },
+        {
+          stageId: "s3",
+          order: 3,
+          agentRole: "agronomist",
+          intent: "e3",
+          toolName: RaiToolName.EchoMessage,
+          label: "l3",
+          dependsOn: ["s2"],
+          status: "planned",
+        },
+      ];
+      return {
+        version: "v1",
+        interactionMode: "task_request",
+        requestShape: "composite",
+        domainCandidates: [],
+        goal: null,
+        entities: [],
+        requestedOperation: {
+          ownerRole: "agronomist",
+          intent: "planner_e2e",
+          toolName: RaiToolName.EchoMessage,
+          decisionType: DecisionType.Execute,
+          source: "semantic_route_primary",
+        },
+        operationAuthority: "delegated_or_autonomous",
+        missingSlots: [],
+        riskClass: "safe_read",
+        requiresConfirmation: false,
+        confidenceBand: ConfidenceBand.High,
+        explanation: "e2e",
+        writePolicy: { decision: "execute", reason: "e2e" },
+        compositePlan: {
+          planId: "cp-e2e-seq4",
+          workflowId: "agro.seq_e2e",
+          /** Не совпадает с `primaryExecution.role`, иначе `applyCompositeWorkflowStage` уходит в CRM multi-executeAgent. */
+          leadOwnerAgent: "planner_e2e_orchestrator",
+          executionStrategy: "sequential",
+          summary: "e2e sequential",
+          stages,
+        },
+        subIntentGraph: {
+          version: "v1",
+          graphId,
+          branches: stages.map((s) => ({
+            branchId: s.stageId,
+            ownerRole: s.agentRole,
+            intent: s.intent,
+            toolName: s.toolName,
+            kind: "analytical" as const,
+            dependsOn: [...s.dependsOn],
+          })),
+        },
+      };
+    }
+
+    beforeEach(() => {
+      process.env.RAI_PLANNER_RUNTIME_ENABLED = "true";
+    });
+
+    afterEach(() => {
+      delete process.env.RAI_PLANNER_RUNTIME_ENABLED;
+    });
+
+    it("четыре сообщения в одном thread: четыре вызова executeAgent, срез планировщика в конце полностью COMPLETED", async () => {
+      const ingress = moduleRef.get(SemanticIngressService);
+      const buildFrameSpy = jest.spyOn(ingress, "buildFrame").mockImplementation(() =>
+        JSON.parse(JSON.stringify(makeSequential4BranchFrame())) as SemanticIngressFrame,
+      );
+      const execSpy = jest.spyOn(moduleRef.get(AgentRuntimeService), "executeAgent").mockResolvedValue({
+        executedTools: [
+          {
+            name: RaiToolName.EchoMessage,
+            result: { ok: true },
+          },
+        ],
+        agentExecution: {
+          role: "agronomist",
+          status: "COMPLETED",
+          executionPath: "explicit_tool_path",
+          text: "e2e",
+          structuredOutput: {},
+          toolCalls: [
+            {
+              name: RaiToolName.EchoMessage,
+              result: { ok: true },
+            },
+          ],
+          connectorCalls: [],
+          evidence: [],
+          validation: { passed: true, reasons: [] },
+          fallbackUsed: false,
+          outputContractVersion: "v1",
+          auditPayload: {
+            runtimeMode: "agent-first-hybrid",
+            autonomyMode: "advisory",
+            allowedToolNames: [RaiToolName.EchoMessage],
+            blockedToolNames: [],
+            connectorNames: [],
+            outputContractId: "agronom-v1",
+          },
+        },
+      } as Awaited<ReturnType<AgentRuntimeService["executeAgent"]>>);
+
+      const threadId = "th-planner-seq-e2e";
+      const companyId = "company-1";
+      for (let i = 0; i < 4; i += 1) {
+        const res = await supervisor.orchestrate(
+          {
+            message: `planner e2e tick ${i}`,
+            threadId,
+            clientTraceId: `ct-e2e-${i}`,
+            toolCalls: [
+              {
+                name: RaiToolName.EchoMessage,
+                payload: { text: `tick-${i}` },
+              },
+            ],
+          },
+          companyId,
+          "user-1",
+        );
+        expect(res.executionSurface?.branches?.length).toBe(4);
+      }
+
+      await flushAsync();
+
+      expect(buildFrameSpy).toHaveBeenCalledTimes(4);
+      expect(execSpy).toHaveBeenCalledTimes(4);
+
+      const plane = moduleRef.get(BranchStatePlaneService);
+      const slice = await plane.getThreadPlannerSlice(companyId, threadId);
+      expect(slice).not.toBeNull();
+      expect(slice!.executionSurface.branches.map((b) => b.lifecycle)).toEqual([
+        "COMPLETED",
+        "COMPLETED",
+        "COMPLETED",
+        "COMPLETED",
+      ]);
+
+      buildFrameSpy.mockRestore();
+      execSpy.mockRestore();
+    });
+  });
+
+  describe("Planner multi-explicit tool e2e", () => {
+    beforeEach(() => {
+      process.env.RAI_PLANNER_RUNTIME_ENABLED = "true";
+    });
+
+    afterEach(() => {
+      delete process.env.RAI_PLANNER_RUNTIME_ENABLED;
+    });
+
+    it("два явных toolCalls без composite: реальный buildFrame → SubIntentGraph из двух веток, surface COMPLETED, telemetry", async () => {
+      const execSpy = jest
+        .spyOn(moduleRef.get(AgentRuntimeService), "executeAgent")
+        .mockImplementation(async (executionRequest) => {
+          const toolName = executionRequest.requestedTools?.[0]?.name;
+          if (toolName === RaiToolName.ComputeDeviations) {
+            return {
+              executedTools: [
+                {
+                  name: RaiToolName.ComputeDeviations,
+                  result: { summary: "dev ok" },
+                },
+              ],
+              agentExecution: {
+                role: "agronomist",
+                status: "COMPLETED",
+                executionPath: "explicit_tool_path",
+                text: "deviation ok",
+                structuredOutput: {
+                  intent: "compute_deviations",
+                  confidence: 0.92,
+                  branchVerdict: "VERIFIED",
+                },
+                toolCalls: [
+                  {
+                    name: RaiToolName.ComputeDeviations,
+                    result: { summary: "dev ok" },
+                  },
+                ],
+                connectorCalls: [],
+                evidence: [],
+                validation: { passed: true, reasons: [] },
+                fallbackUsed: false,
+                outputContractVersion: "v1",
+                auditPayload: {
+                  runtimeMode: "agent-first-hybrid",
+                  autonomyMode: "advisory",
+                  allowedToolNames: [RaiToolName.ComputeDeviations],
+                  blockedToolNames: [],
+                  connectorNames: [],
+                  outputContractId: "agronom-v1",
+                },
+              },
+            } as Awaited<ReturnType<AgentRuntimeService["executeAgent"]>>;
+          }
+
+          if (toolName === RaiToolName.QueryKnowledge) {
+            return {
+              executedTools: [
+                {
+                  name: RaiToolName.QueryKnowledge,
+                  result: { summary: "k ok" },
+                },
+              ],
+              agentExecution: {
+                role: "knowledge",
+                status: "COMPLETED",
+                executionPath: "explicit_tool_path",
+                text: "knowledge ok",
+                structuredOutput: {
+                  intent: "query_knowledge",
+                  confidence: 0.88,
+                  branchVerdict: "VERIFIED",
+                },
+                toolCalls: [
+                  {
+                    name: RaiToolName.QueryKnowledge,
+                    result: { summary: "k ok" },
+                  },
+                ],
+                connectorCalls: [],
+                evidence: [],
+                validation: { passed: true, reasons: [] },
+                fallbackUsed: false,
+                outputContractVersion: "v1",
+                auditPayload: {
+                  runtimeMode: "agent-first-hybrid",
+                  autonomyMode: "advisory",
+                  allowedToolNames: [RaiToolName.QueryKnowledge],
+                  blockedToolNames: [],
+                  connectorNames: [],
+                  outputContractId: "knowledge-v1",
+                },
+              },
+            } as Awaited<ReturnType<AgentRuntimeService["executeAgent"]>>;
+          }
+
+          throw new Error(`unexpected tool ${String(toolName)}`);
+        });
+
+      const res = await supervisor.orchestrate(
+        {
+          message: "multi explicit planner e2e",
+          clientTraceId: "ct-multi-explicit-e2e",
+          workspaceContext: { route: "/consulting/fields" },
+          toolCalls: [
+            {
+              name: RaiToolName.ComputeDeviations,
+              payload: { scope: { seasonId: "season-1", fieldId: "field-1" } },
+            },
+            {
+              name: RaiToolName.QueryKnowledge,
+              payload: { query: "норма" },
+            },
+          ],
+        },
+        "company-1",
+        "user-1",
+      );
+
+      await flushAsync();
+
+      expect(execSpy).toHaveBeenCalledTimes(2);
+      expect(execSpy.mock.calls[0]?.[0]).toEqual(
+        expect.objectContaining({
+          role: "agronomist",
+          requestedTools: [
+            expect.objectContaining({
+              name: RaiToolName.ComputeDeviations,
+            }),
+          ],
+        }),
+      );
+      expect(execSpy.mock.calls[1]?.[0]).toEqual(
+        expect.objectContaining({
+          role: "knowledge",
+          requestedTools: [
+            expect.objectContaining({
+              name: RaiToolName.QueryKnowledge,
+            }),
+          ],
+        }),
+      );
+      expect(res.executionSurface?.branches).toHaveLength(2);
+      expect(res.executionSurface?.branches.every((b) => b.lifecycle === "COMPLETED")).toBe(true);
+      expect(res.executionExplainability?.branches).toHaveLength(2);
+      expect(
+        res.executionSurface?.branches.map((b) => b.branchId).sort(),
+      ).toEqual(
+        ["explicit_0_compute_deviations", "explicit_1_query_knowledge"].sort(),
+      );
+
+      expect(prismaState.aiAuditEntries.length).toBeGreaterThanOrEqual(1);
+      const meta = prismaState.aiAuditEntries[0].metadata as JsonRecord;
+      expect(meta.plannerBranchTelemetry).toEqual(
+        expect.objectContaining({
+          maxConcurrentBranches: 4,
+          branches: expect.any(Array),
+        }),
+      );
+      expect((meta.plannerBranchTelemetry as JsonRecord).branches).toHaveLength(2);
+
+      execSpy.mockRestore();
+    });
+  });
+
+  describe("Planner tech-map clarify e2e", () => {
+    beforeEach(() => {
+      process.env.RAI_PLANNER_RUNTIME_ENABLED = "true";
+      process.env.RAI_AGENT_RUNTIME_MODE = "agent-first-hybrid";
+    });
+
+    afterEach(() => {
+      delete process.env.RAI_PLANNER_RUNTIME_ENABLED;
+      delete process.env.RAI_AGENT_RUNTIME_MODE;
+    });
+
+    it("tech_map_core как WRITE уходит в BLOCKED_ON_CONFIRMATION и clarify branch не активируется до подтверждения", async () => {
+      semanticRouterMock.evaluate.mockResolvedValueOnce({
+        promotedPrimary: false,
+        sliceId: "agro.techmaps.list-open-create",
+        requestedToolCalls: [],
+        classification: {
+          targetRole: "agronomist",
+          intent: "tech_map_draft",
+          toolName: RaiToolName.GenerateTechMapDraft,
+          confidence: 0.85,
+          method: "semantic_route_shadow",
+          reason: "semantic_router:techmap_create_execute",
+        },
+        semanticIntent: {
+          domain: "agro",
+          entity: "techmap",
+          action: "create",
+          interactionMode: "write_candidate",
+          mutationRisk: "side_effecting_write",
+          filters: {},
+          requiredContext: [],
+          focusObject: {
+            kind: "techmap",
+            id: "techmap-77",
+          },
+          dialogState: {
+            activeFlow: null,
+            pendingClarificationKeys: [],
+            lastUserAction: null,
+          },
+          resolvability: "resolved",
+          ambiguityType: "none",
+          confidenceBand: "high",
+          reason: "semantic_router:techmap_create_execute",
+        },
+        routeDecision: {
+          decisionType: "execute",
+          recommendedExecutionMode: "direct_execute",
+          eligibleTools: [RaiToolName.GenerateTechMapDraft],
+          eligibleFlows: ["tech_map_draft"],
+          requiredContextMissing: ["soil_profile"],
+          policyChecksRequired: [],
+          needsConfirmation: false,
+          needsClarification: true,
+          abstainReason: null,
+          policyBlockReason: null,
+        },
+        candidateRoutes: [],
+        divergence: {
+          isMismatch: false,
+          mismatchKinds: [],
+          summary: "match",
+          legacyRouteKey: "agronomist:tech_map_draft",
+          semanticRouteKey: "agro:techmap:create",
+        },
+        versionInfo: {
+          routerVersion: "semantic-router-v1",
+          promptVersion: "semantic-router-prompt-v1",
+          toolsetVersion: "toolset-v1",
+          workspaceStateDigest: "digest",
+        },
+        latencyMs: 5,
+        executionPath: "semantic_route_shadow",
+        routingContext: {
+          source: "shadow",
+          promotedPrimary: false,
+          enforceCapabilityGating: false,
+          sliceId: "agro.techmaps.list-open-create",
+          semanticIntent: {
+            domain: "agro",
+            entity: "techmap",
+            action: "create",
+            interactionMode: "write_candidate",
+            mutationRisk: "side_effecting_write",
+            filters: {},
+            requiredContext: [],
+            focusObject: {
+              kind: "techmap",
+              id: "techmap-77",
+            },
+            dialogState: {
+              activeFlow: null,
+              pendingClarificationKeys: [],
+              lastUserAction: null,
+            },
+            resolvability: "resolved",
+            ambiguityType: "none",
+            confidenceBand: "high",
+            reason: "semantic_router:techmap_create_execute",
+          },
+          routeDecision: {
+            decisionType: "execute",
+            recommendedExecutionMode: "direct_execute",
+            eligibleTools: [RaiToolName.GenerateTechMapDraft],
+            eligibleFlows: ["tech_map_draft"],
+            requiredContextMissing: ["soil_profile"],
+            policyChecksRequired: [],
+            needsConfirmation: false,
+            needsClarification: true,
+            abstainReason: null,
+            policyBlockReason: null,
+          },
+          candidateRoutes: [],
+        },
+        llmUsed: false,
+        llmError: null,
+      });
+      techMapServiceMock.createDraftStub.mockResolvedValueOnce({
+        draftId: "draft-clarify-1",
+        status: "DRAFT",
+        fieldRef: "field-1",
+        seasonRef: "season-1",
+        crop: "rapeseed",
+        missingMust: ["soil_profile"],
+        tasks: [],
+        assumptions: [],
+        clarifyBatch: {
+          mode: "MULTI_STEP",
+          status: "OPEN",
+          resume_token:
+            "resume:tech-map:draft-clarify-1:clarify:draft-clarify-1:soil_profile",
+        },
+        workflowResumeState: {
+          resume_from_phase: "MISSING_CONTEXT_TRIAGE",
+          external_recheck_required: false,
+        },
+      });
+
+      const execSpy = jest.spyOn(moduleRef.get(AgentRuntimeService), "executeAgent");
+
+      const response = await supervisor.orchestrate(
+        {
+          message: "Сделай техкарту",
+          toolCalls: [
+            {
+              name: RaiToolName.GenerateTechMapDraft,
+              payload: {
+                fieldRef: "field-1",
+                seasonRef: "season-1",
+                crop: "rapeseed",
+              },
+            },
+          ],
+        },
+        "company-1",
+        "user-1",
+      );
+
+      await flushAsync();
+
+      expect(execSpy).toHaveBeenCalledTimes(1);
+      expect(response.executionSurface?.branches).toHaveLength(2);
+      const byId = new Map(
+        response.executionSurface!.branches.map((branch) => [branch.branchId, branch]),
+      );
+      expect(byId.get("tech_map_core")?.lifecycle).toBe("BLOCKED_ON_CONFIRMATION");
+      expect(byId.get("tech_map_clarify")?.lifecycle).toBe("PLANNED");
+    });
+  });
+
+  describe("Planner multi-explicit concurrency cap e2e", () => {
+    beforeEach(() => {
+      process.env.RAI_PLANNER_RUNTIME_ENABLED = "true";
+      process.env.RAI_PLANNER_MAX_CONCURRENT_BRANCHES = "1";
+    });
+
+    afterEach(() => {
+      delete process.env.RAI_PLANNER_RUNTIME_ENABLED;
+      delete process.env.RAI_PLANNER_MAX_CONCURRENT_BRANCHES;
+    });
+
+    it("два explicit-корня при cap=1: одна ветка COMPLETED, вторая PLANNED + concurrencyDeferral + telemetry cap", async () => {
+      const execSpy = jest
+        .spyOn(moduleRef.get(AgentRuntimeService), "executeAgent")
+        .mockImplementation(async (executionRequest) => {
+          const toolName = executionRequest.requestedTools?.[0]?.name;
+          if (toolName !== RaiToolName.ComputeDeviations) {
+            throw new Error(`unexpected tool ${String(toolName)}`);
+          }
+          return {
+            executedTools: [
+              {
+                name: RaiToolName.ComputeDeviations,
+                result: { summary: "dev ok" },
+              },
+            ],
+            agentExecution: {
+              role: "agronomist",
+              status: "COMPLETED",
+              executionPath: "explicit_tool_path",
+              text: "cap e2e",
+              structuredOutput: {
+                intent: "compute_deviations",
+                confidence: 0.91,
+                branchVerdict: "VERIFIED",
+              },
+              toolCalls: [
+                {
+                  name: RaiToolName.ComputeDeviations,
+                  result: { summary: "dev ok" },
+                },
+              ],
+              connectorCalls: [],
+              evidence: [],
+              validation: { passed: true, reasons: [] },
+              fallbackUsed: false,
+              outputContractVersion: "v1",
+              auditPayload: {
+                runtimeMode: "agent-first-hybrid",
+                autonomyMode: "advisory",
+                allowedToolNames: [RaiToolName.ComputeDeviations],
+                blockedToolNames: [],
+                connectorNames: [],
+                outputContractId: "agronom-v1",
+              },
+            },
+          } as Awaited<ReturnType<AgentRuntimeService["executeAgent"]>>;
+        });
+
+      const res = await supervisor.orchestrate(
+        {
+          message: "multi explicit cap1 e2e",
+          clientTraceId: "ct-multi-explicit-cap1",
+          workspaceContext: { route: "/consulting/fields" },
+          toolCalls: [
+            {
+              name: RaiToolName.ComputeDeviations,
+              payload: { scope: { seasonId: "season-1", fieldId: "field-1" } },
+            },
+            {
+              name: RaiToolName.QueryKnowledge,
+              payload: { query: "норма" },
+            },
+          ],
+        },
+        "company-1",
+        "user-1",
+      );
+
+      await flushAsync();
+
+      expect(execSpy).toHaveBeenCalledTimes(1);
+      expect(res.executionSurface?.branches).toHaveLength(2);
+      const byId = new Map(
+        res.executionSurface!.branches.map((b) => [b.branchId, b]),
+      );
+      expect(byId.get("explicit_0_compute_deviations")?.lifecycle).toBe("COMPLETED");
+      expect(byId.get("explicit_1_query_knowledge")?.lifecycle).toBe("PLANNED");
+
+      expect(res.executionExplainability?.concurrencyDeferral).toEqual({
+        cap: 1,
+        deferredBranchIds: ["explicit_1_query_knowledge"],
+      });
+      const deferredEx = res.executionExplainability?.branches?.find(
+        (b) => b.branchId === "explicit_1_query_knowledge",
+      );
+      expect(deferredEx?.policyDecision).toBe("branch_concurrency_cap");
+
+      expect(prismaState.aiAuditEntries.length).toBeGreaterThanOrEqual(1);
+      const meta = prismaState.aiAuditEntries[0].metadata as JsonRecord;
+      expect(meta.plannerBranchTelemetry).toEqual(
+        expect.objectContaining({
+          maxConcurrentBranches: 1,
+          branches: expect.any(Array),
+        }),
+      );
+
+      execSpy.mockRestore();
+    });
+
+    it("cap=1 + второй тик в том же threadId: carry-forward, две ветки COMPLETED, два executeAgent", async () => {
+      const execSpy = jest
+        .spyOn(moduleRef.get(AgentRuntimeService), "executeAgent")
+        .mockImplementation(async (executionRequest) => {
+          const toolName = executionRequest.requestedTools?.[0]?.name;
+          if (toolName === RaiToolName.ComputeDeviations) {
+            return {
+              executedTools: [
+                {
+                  name: RaiToolName.ComputeDeviations,
+                  result: { summary: "dev ok" },
+                },
+              ],
+              agentExecution: {
+                role: "agronomist",
+                status: "COMPLETED",
+                executionPath: "explicit_tool_path",
+                text: "carry deviations ok",
+                structuredOutput: {
+                  intent: "compute_deviations",
+                  confidence: 0.91,
+                  branchVerdict: "VERIFIED",
+                },
+                toolCalls: [
+                  {
+                    name: RaiToolName.ComputeDeviations,
+                    result: { summary: "dev ok" },
+                  },
+                ],
+                connectorCalls: [],
+                evidence: [],
+                validation: { passed: true, reasons: [] },
+                fallbackUsed: false,
+                outputContractVersion: "v1",
+                auditPayload: {
+                  runtimeMode: "agent-first-hybrid",
+                  autonomyMode: "advisory",
+                  allowedToolNames: [RaiToolName.ComputeDeviations],
+                  blockedToolNames: [],
+                  connectorNames: [],
+                  outputContractId: "agronom-v1",
+                },
+              },
+            } as Awaited<ReturnType<AgentRuntimeService["executeAgent"]>>;
+          }
+
+          if (toolName === RaiToolName.QueryKnowledge) {
+            return {
+              executedTools: [
+                {
+                  name: RaiToolName.QueryKnowledge,
+                  result: { summary: "k ok" },
+                },
+              ],
+              agentExecution: {
+                role: "knowledge",
+                status: "COMPLETED",
+                executionPath: "explicit_tool_path",
+                text: "carry knowledge ok",
+                structuredOutput: {
+                  intent: "query_knowledge",
+                  confidence: 0.87,
+                  branchVerdict: "VERIFIED",
+                },
+                toolCalls: [
+                  {
+                    name: RaiToolName.QueryKnowledge,
+                    result: { summary: "k ok" },
+                  },
+                ],
+                connectorCalls: [],
+                evidence: [],
+                validation: { passed: true, reasons: [] },
+                fallbackUsed: false,
+                outputContractVersion: "v1",
+                auditPayload: {
+                  runtimeMode: "agent-first-hybrid",
+                  autonomyMode: "advisory",
+                  allowedToolNames: [RaiToolName.QueryKnowledge],
+                  blockedToolNames: [],
+                  connectorNames: [],
+                  outputContractId: "knowledge-v1",
+                },
+              },
+            } as Awaited<ReturnType<AgentRuntimeService["executeAgent"]>>;
+          }
+
+          throw new Error(`unexpected tool ${String(toolName)}`);
+        });
+
+      const threadId = "th-multi-explicit-cap1-carry";
+      const companyId = "company-1";
+      const base = {
+        threadId,
+        workspaceContext: { route: "/consulting/fields" },
+        toolCalls: [
+          {
+            name: RaiToolName.ComputeDeviations,
+            payload: { scope: { seasonId: "season-1", fieldId: "field-1" } },
+          },
+          {
+            name: RaiToolName.QueryKnowledge,
+            payload: { query: "норма" },
+          },
+        ],
+      };
+
+      const res1 = await supervisor.orchestrate(
+        {
+          ...base,
+          message: "cap carry tick 1",
+          clientTraceId: "ct-cap1-carry-1",
+        },
+        companyId,
+        "user-1",
+      );
+      await flushAsync();
+
+      expect(
+        res1.executionSurface?.branches.find(
+          (b) => b.branchId === "explicit_1_query_knowledge",
+        )?.lifecycle,
+      ).toBe("PLANNED");
+      expect(res1.executionExplainability?.concurrencyDeferral?.deferredBranchIds).toEqual([
+        "explicit_1_query_knowledge",
+      ]);
+
+      const res2 = await supervisor.orchestrate(
+        {
+          ...base,
+          message: "cap carry tick 2",
+          clientTraceId: "ct-cap1-carry-2",
+        },
+        companyId,
+        "user-1",
+      );
+      await flushAsync();
+
+      expect(execSpy).toHaveBeenCalledTimes(2);
+      expect(execSpy.mock.calls[0]?.[0]).toEqual(
+        expect.objectContaining({
+          role: "agronomist",
+          requestedTools: [
+            expect.objectContaining({
+              name: RaiToolName.ComputeDeviations,
+            }),
+          ],
+        }),
+      );
+      expect(execSpy.mock.calls[1]?.[0]).toEqual(
+        expect.objectContaining({
+          role: "knowledge",
+          requestedTools: [
+            expect.objectContaining({
+              name: RaiToolName.QueryKnowledge,
+            }),
+          ],
+        }),
+      );
+      expect(res2.executionSurface?.branches).toHaveLength(2);
+      expect(
+        res2.executionSurface?.branches.every((b) => b.lifecycle === "COMPLETED"),
+      ).toBe(true);
+      expect(res2.executionExplainability?.concurrencyDeferral).toBeUndefined();
+
+      const plane = moduleRef.get(BranchStatePlaneService);
+      const slice = await plane.getThreadPlannerSlice(companyId, threadId);
+      expect(slice).not.toBeNull();
+      expect(slice!.executionSurface.branches.map((b) => b.lifecycle)).toEqual([
+        "COMPLETED",
+        "COMPLETED",
+      ]);
+
+      execSpy.mockRestore();
+    });
+
+    it("cap=1 + governed mutation resume: BLOCKED -> APPROVED_FINAL -> carry-forward до второй ветки", async () => {
+      const execSpy = jest
+        .spyOn(moduleRef.get(AgentRuntimeService), "executeAgent")
+        .mockImplementation(async (executionRequest) => {
+          const toolName = executionRequest.requestedTools?.[0]?.name;
+          const inn =
+            executionRequest.requestedTools?.[0]?.payload &&
+            typeof executionRequest.requestedTools[0].payload === "object"
+              ? (executionRequest.requestedTools[0].payload as JsonRecord).inn
+              : undefined;
+
+          if (
+            toolName === RaiToolName.RegisterCounterparty &&
+            inn === "2636041493" &&
+            execSpy.mock.calls.length === 1
+          ) {
+            return {
+              executedTools: [
+                {
+                  name: RaiToolName.RegisterCounterparty,
+                  result: { riskPolicyBlocked: true, actionId: "pa-1" },
+                },
+              ],
+              agentExecution: {
+                role: "crm_agent",
+                status: "COMPLETED",
+                executionPath: "explicit_tool_path",
+                text: "Создание контрагента ожидает подтверждения.",
+                structuredOutput: {
+                  intent: "register_counterparty",
+                  confidence: 0.95,
+                  branchVerdict: "VERIFIED",
+                },
+                toolCalls: [
+                  {
+                    name: RaiToolName.RegisterCounterparty,
+                    result: { riskPolicyBlocked: true, actionId: "pa-1" },
+                  },
+                ],
+                connectorCalls: [],
+                evidence: [],
+                validation: { passed: true, reasons: [] },
+                fallbackUsed: false,
+                outputContractVersion: "v1",
+                auditPayload: {
+                  runtimeMode: "agent-first-hybrid",
+                  autonomyMode: "advisory",
+                  allowedToolNames: [RaiToolName.RegisterCounterparty],
+                  blockedToolNames: [],
+                  connectorNames: [],
+                  outputContractId: "crm-v1",
+                },
+              },
+            } as Awaited<ReturnType<AgentRuntimeService["executeAgent"]>>;
+          }
+
+          if (toolName === RaiToolName.RegisterCounterparty) {
+            return {
+              executedTools: [
+                {
+                  name: RaiToolName.RegisterCounterparty,
+                  result: { partyId: "party-1", summary: "crm ok" },
+                },
+              ],
+              agentExecution: {
+                role: "crm_agent",
+                status: "COMPLETED",
+                executionPath: "explicit_tool_path",
+                text: "Контрагент зарегистрирован.",
+                structuredOutput: {
+                  intent: "register_counterparty",
+                  confidence: 0.93,
+                  branchVerdict: "VERIFIED",
+                  data: { partyId: "party-1" },
+                },
+                toolCalls: [
+                  {
+                    name: RaiToolName.RegisterCounterparty,
+                    result: { partyId: "party-1", summary: "crm ok" },
+                  },
+                ],
+                connectorCalls: [],
+                evidence: [],
+                validation: { passed: true, reasons: [] },
+                fallbackUsed: false,
+                outputContractVersion: "v1",
+                auditPayload: {
+                  runtimeMode: "agent-first-hybrid",
+                  autonomyMode: "advisory",
+                  allowedToolNames: [RaiToolName.RegisterCounterparty],
+                  blockedToolNames: [],
+                  connectorNames: [],
+                  outputContractId: "crm-v1",
+                },
+              },
+            } as Awaited<ReturnType<AgentRuntimeService["executeAgent"]>>;
+          }
+
+          if (toolName === RaiToolName.QueryKnowledge) {
+            return {
+              executedTools: [
+                {
+                  name: RaiToolName.QueryKnowledge,
+                  result: { summary: "knowledge ok" },
+                },
+              ],
+              agentExecution: {
+                role: "knowledge",
+                status: "COMPLETED",
+                executionPath: "explicit_tool_path",
+                text: "Справка из базы знаний найдена.",
+                structuredOutput: {
+                  intent: "query_knowledge",
+                  confidence: 0.87,
+                  branchVerdict: "VERIFIED",
+                },
+                toolCalls: [
+                  {
+                    name: RaiToolName.QueryKnowledge,
+                    result: { summary: "knowledge ok" },
+                  },
+                ],
+                connectorCalls: [],
+                evidence: [],
+                validation: { passed: true, reasons: [] },
+                fallbackUsed: false,
+                outputContractVersion: "v1",
+                auditPayload: {
+                  runtimeMode: "agent-first-hybrid",
+                  autonomyMode: "advisory",
+                  allowedToolNames: [RaiToolName.QueryKnowledge],
+                  blockedToolNames: [],
+                  connectorNames: [],
+                  outputContractId: "knowledge-v1",
+                },
+              },
+            } as Awaited<ReturnType<AgentRuntimeService["executeAgent"]>>;
+          }
+
+          throw new Error(`unexpected tool ${String(toolName)}`);
+        });
+
+      const threadId = "th-planner-mutation-resume";
+      const companyId = "company-1";
+      const base = {
+        threadId,
+        workspaceContext: { route: "/crm/counterparties" },
+        toolCalls: [
+          {
+            name: RaiToolName.RegisterCounterparty,
+            payload: {
+              inn: "2636041493",
+              jurisdictionCode: "RU",
+              partyType: "LEGAL_ENTITY",
+            },
+          },
+          {
+            name: RaiToolName.QueryKnowledge,
+            payload: { query: "контрагент зарегистрирован" },
+          },
+        ],
+      };
+
+      const res1 = await supervisor.orchestrate(
+        {
+          ...base,
+          message: "resume tick 1",
+          clientTraceId: "ct-planner-mutation-1",
+        },
+        companyId,
+        "user-1",
+      );
+      await flushAsync();
+
+      expect(execSpy).toHaveBeenCalledTimes(1);
+      let byId = new Map(
+        res1.executionSurface!.branches.map((branch) => [branch.branchId, branch]),
+      );
+      expect(byId.get("explicit_0_register_counterparty")?.lifecycle).toBe(
+        "BLOCKED_ON_CONFIRMATION",
+      );
+      expect(byId.get("explicit_0_register_counterparty")?.pendingActionId).toBe(
+        "pa-1",
+      );
+      expect(byId.get("explicit_1_query_knowledge")?.lifecycle).toBe("PLANNED");
+
+      prismaState.pendingActions.push({
+        id: "pa-1",
+        companyId,
+        status: "APPROVED_FINAL",
+        expiresAt: new Date(Date.now() + 60 * 60 * 1000),
+      });
+
+      const res2 = await supervisor.orchestrate(
+        {
+          ...base,
+          message: "resume tick 2",
+          clientTraceId: "ct-planner-mutation-2",
+          executionPlannerMutationApproved: true,
+          executionPlannerApprovedPendingActionId: "pa-1",
+        },
+        companyId,
+        "user-1",
+      );
+      await flushAsync();
+
+      expect(execSpy).toHaveBeenCalledTimes(2);
+      byId = new Map(
+        res2.executionSurface!.branches.map((branch) => [branch.branchId, branch]),
+      );
+      expect(byId.get("explicit_0_register_counterparty")?.lifecycle).toBe(
+        "COMPLETED",
+      );
+      expect(byId.get("explicit_1_query_knowledge")?.lifecycle).toBe("PLANNED");
+
+      const res3 = await supervisor.orchestrate(
+        {
+          ...base,
+          message: "resume tick 3",
+          clientTraceId: "ct-planner-mutation-3",
+        },
+        companyId,
+        "user-1",
+      );
+      await flushAsync();
+
+      expect(execSpy).toHaveBeenCalledTimes(3);
+      expect(execSpy.mock.calls[1]?.[0]).toEqual(
+        expect.objectContaining({
+          role: "crm_agent",
+          requestedTools: [
+            expect.objectContaining({
+              name: RaiToolName.RegisterCounterparty,
+            }),
+          ],
+        }),
+      );
+      expect(execSpy.mock.calls[2]?.[0]).toEqual(
+        expect.objectContaining({
+          role: "knowledge",
+          requestedTools: [
+            expect.objectContaining({
+              name: RaiToolName.QueryKnowledge,
+            }),
+          ],
+        }),
+      );
+      expect(
+        res3.executionSurface?.branches.every(
+          (branch) => branch.lifecycle === "COMPLETED",
+        ),
+      ).toBe(true);
+
+      const plane = moduleRef.get(BranchStatePlaneService);
+      const slice = await plane.getThreadPlannerSlice(companyId, threadId);
+      expect(slice).not.toBeNull();
+      expect(slice!.executionSurface.branches.map((b) => b.lifecycle)).toEqual([
+        "COMPLETED",
+        "COMPLETED",
+      ]);
+
+      execSpy.mockRestore();
+    });
   });
 });

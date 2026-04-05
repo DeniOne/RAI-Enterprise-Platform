@@ -25,9 +25,9 @@
     "expected": {
       "sliceId": "agro.techmaps.list-open-create",
       "promotedPrimary": true,
-      "executionPath": "semantic_router_primary",
+      "executionPath": "semantic_route_primary",
       "classificationIntent": "open_techmaps_registry",
-      "classificationMethod": "semantic_router_primary",
+      "classificationMethod": "semantic_route_primary",
       "decisionType": "navigate",
       "recommendedExecutionMode": "open_route",
       "eligibleTools": [],
@@ -67,9 +67,9 @@
     "expected": {
       "sliceId": "agro.techmaps.list-open-create",
       "promotedPrimary": true,
-      "executionPath": "semantic_router_primary",
+      "executionPath": "semantic_route_primary",
       "classificationIntent": "open_techmaps_registry",
-      "classificationMethod": "semantic_router_primary",
+      "classificationMethod": "semantic_route_primary",
       "decisionType": "navigate",
       "recommendedExecutionMode": "open_route",
       "eligibleTools": [],
@@ -104,9 +104,9 @@
     "expected": {
       "sliceId": "agro.techmaps.list-open-create",
       "promotedPrimary": true,
-      "executionPath": "semantic_router_primary",
+      "executionPath": "semantic_route_primary",
       "classificationIntent": "open_techmaps_registry",
-      "classificationMethod": "semantic_router_primary",
+      "classificationMethod": "semantic_route_primary",
       "decisionType": "navigate",
       "recommendedExecutionMode": "open_route",
       "eligibleTools": [],
@@ -147,9 +147,9 @@
     "expected": {
       "sliceId": "agro.techmaps.list-open-create",
       "promotedPrimary": true,
-      "executionPath": "semantic_router_primary",
+      "executionPath": "semantic_route_primary",
       "classificationIntent": "tech_map_draft",
-      "classificationMethod": "semantic_router_primary",
+      "classificationMethod": "semantic_route_primary",
       "decisionType": "execute",
       "recommendedExecutionMode": "direct_execute",
       "eligibleTools": [
@@ -196,9 +196,9 @@
     "expected": {
       "sliceId": "agro.techmaps.list-open-create",
       "promotedPrimary": true,
-      "executionPath": "semantic_router_primary",
+      "executionPath": "semantic_route_primary",
       "classificationIntent": "tech_map_draft",
-      "classificationMethod": "semantic_router_primary",
+      "classificationMethod": "semantic_route_primary",
       "decisionType": "execute",
       "recommendedExecutionMode": "direct_execute",
       "eligibleTools": [
@@ -242,9 +242,9 @@
     "expected": {
       "sliceId": "agro.techmaps.list-open-create",
       "promotedPrimary": true,
-      "executionPath": "semantic_router_primary",
+      "executionPath": "semantic_route_primary",
       "classificationIntent": "tech_map_draft",
-      "classificationMethod": "semantic_router_primary",
+      "classificationMethod": "semantic_route_primary",
       "decisionType": "clarify",
       "recommendedExecutionMode": "ask_clarification",
       "eligibleTools": [
@@ -277,9 +277,9 @@
     "expected": {
       "sliceId": "agro.techmaps.list-open-create",
       "promotedPrimary": true,
-      "executionPath": "semantic_router_primary",
+      "executionPath": "semantic_route_primary",
       "classificationIntent": "tech_map_draft",
-      "classificationMethod": "semantic_router_primary",
+      "classificationMethod": "semantic_route_primary",
       "decisionType": "clarify",
       "recommendedExecutionMode": "ask_clarification",
       "eligibleTools": [
@@ -318,9 +318,9 @@
     "expected": {
       "sliceId": "agro.techmaps.list-open-create",
       "promotedPrimary": false,
-      "executionPath": "semantic_router_shadow",
+      "executionPath": "semantic_route_shadow",
       "classificationIntent": "review_account_workspace",
-      "classificationMethod": "semantic_router_shadow",
+      "classificationMethod": "semantic_route_shadow",
       "decisionType": "abstain",
       "recommendedExecutionMode": "no_op",
       "eligibleTools": [],

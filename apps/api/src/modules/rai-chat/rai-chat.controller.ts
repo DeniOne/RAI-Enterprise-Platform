@@ -5,6 +5,8 @@ import {
   Logger,
   BadRequestException,
   UseInterceptors,
+  UsePipes,
+  ValidationPipe,
 } from "@nestjs/common";
 import { Throttle } from "@nestjs/throttler";
 import { CurrentUser } from "../../shared/auth/current-user.decorator";
@@ -15,8 +17,15 @@ import { IdempotencyInterceptor } from "../../shared/idempotency/idempotency.int
 import { Authorized } from "../../shared/auth/authorized.decorator";
 import { INTERNAL_USER_ROLES } from "../../shared/auth/rbac.constants";
 
+const RAI_CHAT_BODY_PIPE = new ValidationPipe({
+  transform: true,
+  whitelist: true,
+  forbidNonWhitelisted: true,
+});
+
 @Controller('rai/chat')
 @Authorized(...INTERNAL_USER_ROLES)
+@UsePipes(RAI_CHAT_BODY_PIPE)
 export class RaiChatController {
   private readonly logger = new Logger(RaiChatController.name);
 

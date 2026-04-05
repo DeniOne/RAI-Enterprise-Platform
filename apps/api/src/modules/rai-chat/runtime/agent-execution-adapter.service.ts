@@ -62,9 +62,9 @@ interface ExecuteAdapterParams {
 }
 
 type ExecutionPath =
-  | "tool_call_primary"
-  | "heuristic_fallback"
-  | "semantic_router_primary";
+  | "explicit_tool_path"
+  | "fallback_interpretation"
+  | "semantic_route_primary";
 type AgronomIntent = "compute_deviations" | "generate_tech_map_draft";
 type EconomistIntent =
   | "compute_plan_fact"
@@ -124,9 +124,10 @@ export class AgentExecutionAdapterService {
         return {
           role: params.request.role,
           status: "COMPLETED",
-          executionPath: "heuristic_fallback",
-          text: "Понял запрос по техкартам. Откройте реестр техкарт по кнопке ниже.",
+          executionPath: "fallback_interpretation",
           structuredOutput: {
+            summary:
+              "Понял запрос по техкартам. Откройте реестр техкарт по кнопке ниже.",
             data: {
               targetRoute: "/consulting/techmaps/active",
             },
@@ -162,9 +163,10 @@ export class AgentExecutionAdapterService {
         return {
           role: params.request.role,
           status: "NEEDS_MORE_DATA",
-          executionPath: "heuristic_fallback",
-          text: "Уточните действие: показать отклонения или подготовить черновик техкарты.",
+          executionPath: "fallback_interpretation",
           structuredOutput: {
+            summary:
+              "Уточните действие: показать отклонения или подготовить черновик техкарты.",
             data: {},
             missingContext: ["intent"],
             routingReason: "no_safe_agronom_intent",
@@ -210,8 +212,8 @@ export class AgentExecutionAdapterService {
         role: params.request.role,
         status: result.status,
         executionPath: routing.executionPath,
-        text: result.explain,
         structuredOutput: {
+          summary: result.explain,
           data: result.data,
           missingContext: result.missingContext,
           mathBasis: result.mathBasis ?? [],
@@ -242,7 +244,8 @@ export class AgentExecutionAdapterService {
         ),
         runtimeBudget: params.budgetDecision,
         fallbackUsed:
-          result.fallbackUsed || routing.executionPath === "heuristic_fallback",
+          result.fallbackUsed ||
+          routing.executionPath === "fallback_interpretation",
         outputContractVersion:
           params.kernel.outputContract.responseSchemaVersion,
         auditPayload,
@@ -275,8 +278,8 @@ export class AgentExecutionAdapterService {
         role: params.request.role,
         status: result.status,
         executionPath,
-        text: result.explain,
         structuredOutput: {
+          summary: result.explain,
           data: result.data,
           missingContext: result.missingContext,
         },
@@ -303,7 +306,7 @@ export class AgentExecutionAdapterService {
         ),
         runtimeBudget: params.budgetDecision,
         fallbackUsed:
-          result.fallbackUsed || executionPath === "heuristic_fallback",
+          result.fallbackUsed || executionPath === "fallback_interpretation",
         outputContractVersion:
           params.kernel.outputContract.responseSchemaVersion,
         auditPayload,
@@ -327,8 +330,7 @@ export class AgentExecutionAdapterService {
         role: params.request.role,
         status: result.status,
         executionPath,
-        text: result.explain,
-        structuredOutput: { data: result.data },
+        structuredOutput: { summary: result.explain, data: result.data },
         toolCalls:
           result.toolCallsCount > 0
             ? [{ name: RaiToolName.QueryKnowledge, result: result.data }]
@@ -344,7 +346,7 @@ export class AgentExecutionAdapterService {
         ),
         runtimeBudget: params.budgetDecision,
         fallbackUsed:
-          result.fallbackUsed || executionPath === "heuristic_fallback",
+          result.fallbackUsed || executionPath === "fallback_interpretation",
         outputContractVersion:
           params.kernel.outputContract.responseSchemaVersion,
         auditPayload,
@@ -594,8 +596,8 @@ export class AgentExecutionAdapterService {
         role: params.request.role,
         status: result.status,
         executionPath,
-        text: result.explain,
         structuredOutput: {
+          summary: result.explain,
           data: result.data,
           missingContext: result.missingContext,
           intent,
@@ -620,7 +622,7 @@ export class AgentExecutionAdapterService {
         ),
         runtimeBudget: params.budgetDecision,
         fallbackUsed:
-          result.fallbackUsed || executionPath === "heuristic_fallback",
+          result.fallbackUsed || executionPath === "fallback_interpretation",
         outputContractVersion:
           params.kernel.outputContract.responseSchemaVersion,
         auditPayload,
@@ -695,8 +697,8 @@ export class AgentExecutionAdapterService {
         role: params.request.role,
         status: result.status,
         executionPath,
-        text: result.explain,
         structuredOutput: {
+          summary: result.explain,
           data: result.data,
           intent,
         },
@@ -720,7 +722,7 @@ export class AgentExecutionAdapterService {
         ),
         runtimeBudget: params.budgetDecision,
         fallbackUsed:
-          result.fallbackUsed || executionPath === "heuristic_fallback",
+          result.fallbackUsed || executionPath === "fallback_interpretation",
         outputContractVersion:
           params.kernel.outputContract.responseSchemaVersion,
         auditPayload,
@@ -880,8 +882,8 @@ export class AgentExecutionAdapterService {
         role: params.request.role,
         status: result.status,
         executionPath,
-        text: result.explain,
         structuredOutput: {
+          summary: result.explain,
           data: result.data,
           missingContext: result.missingContext,
           intent,
@@ -906,7 +908,7 @@ export class AgentExecutionAdapterService {
         ),
         runtimeBudget: params.budgetDecision,
         fallbackUsed:
-          result.fallbackUsed || executionPath === "heuristic_fallback",
+          result.fallbackUsed || executionPath === "fallback_interpretation",
         outputContractVersion:
           params.kernel.outputContract.responseSchemaVersion,
         auditPayload,
@@ -943,8 +945,7 @@ export class AgentExecutionAdapterService {
         role: params.request.role,
         status: result.status,
         executionPath,
-        text: result.explain,
-        structuredOutput: { data: result.data },
+        structuredOutput: { summary: result.explain, data: result.data },
         toolCalls: [], // Expert agents mostly provide synthesis
         connectorCalls: [],
         evidence: result.evidence,
@@ -956,7 +957,7 @@ export class AgentExecutionAdapterService {
           false,
         ),
         runtimeBudget: params.budgetDecision,
-        fallbackUsed: executionPath === "heuristic_fallback",
+        fallbackUsed: executionPath === "fallback_interpretation",
         outputContractVersion:
           params.kernel.outputContract.responseSchemaVersion,
         auditPayload,
@@ -1014,8 +1015,7 @@ export class AgentExecutionAdapterService {
         role: params.request.role,
         status: result.status,
         executionPath,
-        text: result.explain,
-        structuredOutput: { data: result.data },
+        structuredOutput: { summary: result.explain, data: result.data },
         toolCalls: [],
         connectorCalls: [],
         evidence: result.evidence,
@@ -1027,7 +1027,7 @@ export class AgentExecutionAdapterService {
           false,
         ),
         runtimeBudget: params.budgetDecision,
-        fallbackUsed: executionPath === "heuristic_fallback",
+        fallbackUsed: executionPath === "fallback_interpretation",
         outputContractVersion:
           params.kernel.outputContract.responseSchemaVersion,
         auditPayload,
@@ -1049,8 +1049,9 @@ export class AgentExecutionAdapterService {
       role: params.request.role,
       status: result.status,
       executionPath,
-      text: result.explain,
       structuredOutput: {
+        summary: result.explain,
+        resultType: "monitoring_signal",
         alertsEmitted: result.alertsEmitted,
         signalsSnapshot: result.signalsSnapshot ?? {},
       },
@@ -1074,7 +1075,7 @@ export class AgentExecutionAdapterService {
       ),
       runtimeBudget: params.budgetDecision,
       fallbackUsed:
-        result.fallbackUsed || executionPath === "heuristic_fallback",
+        result.fallbackUsed || executionPath === "fallback_interpretation",
       outputContractVersion: params.kernel.outputContract.responseSchemaVersion,
       auditPayload,
     };
@@ -1085,11 +1086,11 @@ export class AgentExecutionAdapterService {
     request: AgentExecutionRequest,
   ): ExecutionPath {
     if (request.semanticRouting?.source === "primary") {
-      return "semantic_router_primary";
+      return "semantic_route_primary";
     }
     return allowedToolCalls.length > 0
-      ? "tool_call_primary"
-      : "heuristic_fallback";
+      ? "explicit_tool_path"
+      : "fallback_interpretation";
   }
 
   private resolveAgronomIntent(
@@ -1099,8 +1100,8 @@ export class AgentExecutionAdapterService {
   ): { intent: AgronomIntent | null; executionPath: ExecutionPath } {
     const primaryExecutionPath =
       semanticRoutingSource === "primary"
-        ? "semantic_router_primary"
-        : "tool_call_primary";
+        ? "semantic_route_primary"
+        : "explicit_tool_path";
 
     if (
       allowedToolCalls.some(
@@ -1127,7 +1128,7 @@ export class AgentExecutionAdapterService {
     if (semanticRoutingSource === "primary") {
       return {
         intent: "generate_tech_map_draft",
-        executionPath: "semantic_router_primary",
+        executionPath: "semantic_route_primary",
       };
     }
 
@@ -1135,7 +1136,7 @@ export class AgentExecutionAdapterService {
     if (/отклон|deviation/i.test(normalizedMessage)) {
       return {
         intent: "compute_deviations",
-        executionPath: "heuristic_fallback",
+        executionPath: "fallback_interpretation",
       };
     }
 
@@ -1147,13 +1148,13 @@ export class AgentExecutionAdapterService {
     if (mentionsTechMap && hasCreateSignal) {
       return {
         intent: "generate_tech_map_draft",
-        executionPath: "heuristic_fallback",
+        executionPath: "fallback_interpretation",
       };
     }
 
     return {
       intent: null,
-      executionPath: "heuristic_fallback",
+      executionPath: "fallback_interpretation",
     };
   }
 

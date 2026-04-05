@@ -187,9 +187,17 @@ const TRUST_LATENCY_PROFILE_LABELS: Record<string, string> = {
 const INGRESS_SOURCE_LABELS: Record<string, string> = {
   clarification_resume: 'возобновление после уточнения',
   explicit_tool_call: 'явный вызов инструмента',
+  fallback_normalization: 'нормализация через fallback-маршрут',
+  semantic_route_primary: 'основной семантический маршрут',
+  semantic_route_shadow: 'теневой семантический маршрут',
   legacy_contracts: 'наследованный контрактный маршрут',
-  semantic_router_primary: 'основной семантический маршрут',
-  semantic_router_shadow: 'теневой семантический маршрут',
+};
+
+const EXECUTION_PATH_LABELS: Record<string, string> = {
+  explicit_tool_path: 'явный путь инструмента',
+  fallback_interpretation: 'fallback-интерпретация',
+  semantic_route_primary: 'основной семантический маршрут',
+  semantic_route_shadow: 'теневой семантический маршрут',
 };
 
 const INCIDENT_TYPE_LABELS: Record<string, string> = {
@@ -515,6 +523,32 @@ function formatMappedValue(
   return fallback;
 }
 
+function normalizeIngressSourceAlias(value: string | null | undefined): string | null | undefined {
+  if (value === 'semantic_router_primary') {
+    return 'semantic_route_primary';
+  }
+  if (value === 'semantic_router_shadow') {
+    return 'semantic_route_shadow';
+  }
+  return value;
+}
+
+function normalizeExecutionPathAlias(value: string | null | undefined): string | null | undefined {
+  if (value === 'tool_call_primary') {
+    return 'explicit_tool_path';
+  }
+  if (value === 'heuristic_fallback') {
+    return 'fallback_interpretation';
+  }
+  if (value === 'semantic_router_primary') {
+    return 'semantic_route_primary';
+  }
+  if (value === 'semantic_router_shadow') {
+    return 'semantic_route_shadow';
+  }
+  return value;
+}
+
 export function formatStatusLabel(value?: string | null): string {
   return formatMappedValue(value, STATUS_LABELS);
 }
@@ -589,7 +623,19 @@ export function formatTrustLatencyProfileLabel(value?: string | null): string {
 }
 
 export function formatIngressSourceLabel(value?: string | null): string {
-  return formatMappedValue(value, INGRESS_SOURCE_LABELS, 'возобновление после уточнения');
+  return formatMappedValue(
+    normalizeIngressSourceAlias(value),
+    INGRESS_SOURCE_LABELS,
+    'возобновление после уточнения',
+  );
+}
+
+export function formatExecutionPathLabel(value?: string | null): string {
+  return formatMappedValue(
+    normalizeExecutionPathAlias(value),
+    EXECUTION_PATH_LABELS,
+    'путь исполнения',
+  );
 }
 
 export function formatIncidentTypeLabel(value?: string | null): string {

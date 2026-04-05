@@ -876,7 +876,7 @@ describe("A_RAI live API smoke", () => {
         },
         workspaceContext: {
           route: "/consulting/techmaps/active",
-          activeEntityRefs: [{ kind: "field", id: "field-42", label: "Поле 42" }],
+          activeEntityRefs: [{ kind: "field", id: "field-42" }],
           filters: {
             seasonId: "season-42",
           },
@@ -2167,6 +2167,146 @@ describe("A_RAI live API smoke", () => {
     expect(response.body.agentRole).toBe("marketer");
     expect(response.body.outputContractVersion).toBe("v1");
     expect(typeof response.body.text).toBe("string");
+  });
+
+  describe("HTTP e2e: planner path + control-tower audit (POST /api/rai/chat)", () => {
+    let prevPlanner: string | undefined;
+
+    beforeEach(() => {
+      prevPlanner = process.env.RAI_PLANNER_RUNTIME_ENABLED;
+      process.env.RAI_PLANNER_RUNTIME_ENABLED = "true";
+      (prismaProxyTyped.aiAuditEntry.create as jest.Mock).mockResolvedValue({
+        id: "audit-planner-http-e2e",
+      });
+    });
+
+    afterEach(() => {
+      if (prevPlanner === undefined) {
+        delete process.env.RAI_PLANNER_RUNTIME_ENABLED;
+      } else {
+        process.env.RAI_PLANNER_RUNTIME_ENABLED = prevPlanner;
+      }
+    });
+
+    it("resume tech_map_draft: ответ с executionSurface и audit metadata.controlTowerPlannerEnvelope", async () => {
+      (prismaProxyTyped.agentConfiguration.findUnique as jest.Mock).mockImplementation(
+        async ({
+          where,
+        }: {
+          where: {
+            agent_config_role_company_unique: {
+              role: string;
+              companyId: string | null;
+            };
+          };
+        }) => {
+          const { role, companyId } = where.agent_config_role_company_unique;
+          if (role === "agronomist" && companyId === "company-a") {
+            return {
+              id: "cfg-agronomist-company-a",
+              name: "AgronomAgent",
+              role: "agronomist",
+              systemPrompt: "You are agronomist.",
+              llmModel: "openai/gpt-4o",
+              maxTokens: 8000,
+              isActive: true,
+              companyId: "company-a",
+              capabilities: ["AgroToolsRegistry"],
+              runtimeProfile: {
+                profileId: "agronomist-runtime-v1",
+                modelRoutingClass: "strong",
+                provider: "openrouter",
+                model: "openai/gpt-4o",
+                maxInputTokens: 8000,
+                maxOutputTokens: 4000,
+                temperature: 0.2,
+                timeoutMs: 15000,
+                supportsStreaming: false,
+              },
+              memoryPolicy: {},
+              outputContract: {
+                contractId: "agronom-v1",
+                responseSchemaVersion: "v1",
+                sections: [
+                  "summary",
+                  "deterministic_basis",
+                  "assumptions",
+                  "missing_data",
+                  "evidence",
+                ],
+                requiresEvidence: true,
+                requiresDeterministicValidation: true,
+                fallbackMode: "deterministic_summary",
+              },
+              governancePolicy: {},
+              autonomyMode: "advisory",
+            };
+          }
+          return null;
+        },
+      );
+
+      const response = await request(app.getHttpServer())
+        .post("/api/rai/chat")
+        .send({
+          message: "Составь черновик техкарты по озимому рапсу",
+          clarificationResume: {
+            windowId: "win-techmap-smoke",
+            intentId: "tech_map_draft",
+            agentRole: "agronomist",
+            collectedContext: {
+              fieldRef: "field-42",
+              seasonRef: "season-42",
+            },
+          },
+          workspaceContext: {
+            route: "/consulting/techmaps/active",
+            activeEntityRefs: [{ kind: "field", id: "field-42" }],
+            filters: {
+              seasonId: "season-42",
+            },
+          },
+          threadId: "thread-smoke-techmap",
+        })
+        .expect(201);
+
+      expect(response.body.agentRole).toBe("agronomist");
+      expect(response.body.executionSurface).toBeDefined();
+      expect(Array.isArray(response.body.executionSurface?.branches)).toBe(
+        true,
+      );
+      expect(response.body.executionSurface.branches.length).toBeGreaterThan(0);
+
+      expect(prismaProxyTyped.aiAuditEntry.create).toHaveBeenCalled();
+      const createArg = (prismaProxyTyped.aiAuditEntry.create as jest.Mock).mock
+        .calls[0][0];
+      const meta = createArg.data.metadata as Record<string, unknown>;
+      expect(meta.controlTowerPlannerEnvelope).toEqual(
+        expect.objectContaining({
+          schemaVersion: "control_tower.planner_envelope.v1",
+          traceId: expect.stringMatching(/^tr_/),
+          companyId: "company-a",
+          promotion: expect.objectContaining({ enabled: true }),
+          plannerSignals: expect.objectContaining({
+            telemetryPresent: true,
+            branchCount: expect.any(Number),
+          }),
+        }),
+      );
+      expect(meta.controlTowerSubIntentGraphSnapshot).toEqual(
+        expect.objectContaining({
+          schemaVersion: "control_tower.sub_intent_graph.v1",
+          graphId: expect.any(String),
+          version: "v1",
+          branches: expect.any(Array),
+        }),
+      );
+      expect(meta.plannerBranchTelemetry).toEqual(
+        expect.objectContaining({
+          branches: expect.any(Array),
+        }),
+      );
+    });
   });
 
 });

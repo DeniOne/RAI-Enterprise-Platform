@@ -2,6 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../../shared/prisma/prisma.service";
 import type { EvidenceReference } from "./dto/rai-chat.dto";
 import { BranchVerdict } from "../../shared/rai-chat/branch-trust.types";
+import { resolveRecommendedVerdictFromTruthfulnessAccounting } from "../../shared/rai-chat/branch-verdict-rules";
 
 export type ClaimTaxonomyType = "AGRO" | "FINANCE" | "LEGAL" | "SAFETY" | "GENERAL";
 
@@ -153,7 +154,8 @@ export class TruthfulnessEngineService {
     const invalidClaimsPct = Math.round(
       (accounting.invalid / accounting.total) * 100,
     );
-    const recommendedVerdict = this.resolveRecommendedVerdict(accounting);
+    const recommendedVerdict =
+      resolveRecommendedVerdictFromTruthfulnessAccounting(accounting);
 
     return {
       classifiedEvidence,
@@ -258,33 +260,6 @@ export class TruthfulnessEngineService {
       requiresCrossCheck: true,
       reasons: ["no_evidence"],
     };
-  }
-
-  private resolveRecommendedVerdict(
-    accounting: TruthfulnessAccounting,
-  ): BranchVerdict {
-    if (accounting.total === 0) {
-      return "UNVERIFIED";
-    }
-    if (accounting.verified === accounting.total) {
-      return "VERIFIED";
-    }
-    if (accounting.invalid > 0 && accounting.verified > 0) {
-      return "CONFLICTED";
-    }
-    if (accounting.invalid === accounting.total) {
-      return "REJECTED";
-    }
-    if (accounting.unverified === accounting.total) {
-      return "UNVERIFIED";
-    }
-    if (accounting.verified > 0 && accounting.unverified > 0) {
-      return "PARTIAL";
-    }
-    if (accounting.invalid > 0 && accounting.unverified > 0) {
-      return "UNVERIFIED";
-    }
-    return "PARTIAL";
   }
 
   private buildEvidenceReasons(

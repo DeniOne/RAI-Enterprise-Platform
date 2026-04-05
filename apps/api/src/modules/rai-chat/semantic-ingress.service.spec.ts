@@ -9,7 +9,7 @@ describe("SemanticIngressService", () => {
     clarificationResume?: boolean;
     semanticEvaluation?: any;
     finalClassification?: any;
-    legacyClassification?: any;
+    baselineClassification?: any;
     finalRequestedToolCalls?: any[];
   }) => {
     const baseSemanticEvaluation = {
@@ -21,7 +21,7 @@ describe("SemanticIngressService", () => {
         intent: "tech_map_draft",
         toolName: RaiToolName.GenerateTechMapDraft,
         confidence: 0.85,
-        method: "semantic_router_shadow",
+        method: "semantic_route_shadow",
         reason: "semantic_router:techmap_create_execute",
       },
       semanticIntent: {
@@ -73,7 +73,7 @@ describe("SemanticIngressService", () => {
         workspaceStateDigest: "digest",
       },
       latencyMs: 5,
-      executionPath: "semantic_router_shadow",
+      executionPath: "semantic_route_shadow",
       routingContext: {
         source: "shadow",
         promotedPrimary: false,
@@ -167,8 +167,8 @@ describe("SemanticIngressService", () => {
         workspaceContext: params.workspaceContext,
         ...(params.clarificationResume ? { clarificationResume: true } : {}),
       } as any,
-      legacyClassification:
-        params.legacyClassification ??
+      baselineClassification:
+        params.baselineClassification ??
         ({
           targetRole: "agronomist",
           intent: "tech_map_draft",
@@ -184,7 +184,7 @@ describe("SemanticIngressService", () => {
           intent: "tech_map_draft",
           toolName: RaiToolName.GenerateTechMapDraft,
           confidence: 0.85,
-          method: "semantic_router_shadow",
+          method: "semantic_route_shadow",
           reason: "semantic_router:techmap_create_execute",
         } as any),
       finalRequestedToolCalls:
@@ -211,7 +211,7 @@ describe("SemanticIngressService", () => {
           route: "/parties",
         },
       } as any,
-      legacyClassification: {
+      baselineClassification: {
         targetRole: "crm_agent",
         intent: "register_counterparty",
         toolName: RaiToolName.RegisterCounterparty,
@@ -246,7 +246,7 @@ describe("SemanticIngressService", () => {
           intent: "register_counterparty",
           toolName: RaiToolName.RegisterCounterparty,
           confidence: 0.82,
-          method: "semantic_router_shadow",
+          method: "semantic_route_shadow",
           reason: "crm_write_candidate",
         },
         semanticIntent: {
@@ -295,7 +295,7 @@ describe("SemanticIngressService", () => {
           workspaceStateDigest: "digest",
         },
         latencyMs: 5,
-        executionPath: "semantic_router_shadow",
+        executionPath: "semantic_route_shadow",
         routingContext: {
           source: "shadow",
           promotedPrimary: false,
@@ -354,7 +354,7 @@ describe("SemanticIngressService", () => {
           ownerRole: "crm_agent",
           intent: "register_counterparty",
           toolName: RaiToolName.RegisterCounterparty,
-          source: "legacy_contracts",
+          source: "fallback_normalization",
           decisionType: "execute",
         }),
       }),
@@ -404,7 +404,7 @@ describe("SemanticIngressService", () => {
           },
         },
       } as any,
-      legacyClassification: {
+      baselineClassification: {
         targetRole: "agronomist",
         intent: "tech_map_draft",
         toolName: RaiToolName.GenerateTechMapDraft,
@@ -417,7 +417,7 @@ describe("SemanticIngressService", () => {
         intent: "tech_map_draft",
         toolName: RaiToolName.GenerateTechMapDraft,
         confidence: 0.85,
-        method: "semantic_router_shadow",
+        method: "semantic_route_shadow",
         reason: "semantic_router:techmap_create_execute",
       },
       finalRequestedToolCalls: [
@@ -439,7 +439,7 @@ describe("SemanticIngressService", () => {
           intent: "tech_map_draft",
           toolName: RaiToolName.GenerateTechMapDraft,
           confidence: 0.85,
-          method: "semantic_router_shadow",
+          method: "semantic_route_shadow",
           reason: "semantic_router:techmap_create_execute",
         },
         semanticIntent: {
@@ -491,7 +491,7 @@ describe("SemanticIngressService", () => {
           workspaceStateDigest: "digest",
         },
         latencyMs: 5,
-        executionPath: "semantic_router_shadow",
+        executionPath: "semantic_route_shadow",
         routingContext: {
           source: "shadow",
           promotedPrimary: false,
@@ -849,7 +849,7 @@ describe("SemanticIngressService", () => {
           route: "/parties",
         },
       } as any,
-      legacyClassification: {
+      baselineClassification: {
         targetRole: "crm_agent",
         intent: "register_counterparty",
         toolName: RaiToolName.RegisterCounterparty,
@@ -884,7 +884,7 @@ describe("SemanticIngressService", () => {
           intent: "register_counterparty",
           toolName: RaiToolName.RegisterCounterparty,
           confidence: 0.84,
-          method: "semantic_router_shadow",
+          method: "semantic_route_shadow",
           reason: "crm_write_candidate",
         },
         semanticIntent: {
@@ -933,7 +933,7 @@ describe("SemanticIngressService", () => {
           workspaceStateDigest: "digest",
         },
         latencyMs: 5,
-        executionPath: "semantic_router_shadow",
+        executionPath: "semantic_route_shadow",
         routingContext: {
           source: "shadow",
           promotedPrimary: false,
@@ -994,6 +994,26 @@ describe("SemanticIngressService", () => {
       "create_crm_account",
       "review_account_workspace",
     ]);
+    expect(frame.compositePlan?.stages[1]?.payloadBindings).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          sourceStageId: "register_counterparty",
+          sourcePath: "data.partyId",
+          targetPath: "partyId",
+          required: true,
+        }),
+      ]),
+    );
+    expect(frame.compositePlan?.stages[2]?.payloadBindings).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          sourceStageId: "create_crm_account",
+          sourcePath: "data.accountId",
+          targetPath: "accountId",
+          required: true,
+        }),
+      ]),
+    );
   });
 
   it("выносит confirm policy отдельно от lexical signal для high-risk write", () => {
@@ -1004,7 +1024,7 @@ describe("SemanticIngressService", () => {
           route: "/crm",
         },
       } as any,
-      legacyClassification: {
+      baselineClassification: {
         targetRole: "crm_agent",
         intent: "update_account_profile",
         toolName: null,
@@ -1030,7 +1050,7 @@ describe("SemanticIngressService", () => {
           intent: "update_account_profile",
           toolName: null,
           confidence: 0.5,
-          method: "semantic_router_primary",
+          method: "semantic_route_primary",
           reason: "high_risk_write",
         },
         semanticIntent: {
@@ -1079,7 +1099,7 @@ describe("SemanticIngressService", () => {
           workspaceStateDigest: "digest",
         },
         latencyMs: 5,
-        executionPath: "semantic_router_primary",
+        executionPath: "semantic_route_primary",
         routingContext: {
           source: "primary",
           promotedPrimary: true,
@@ -1145,7 +1165,7 @@ describe("SemanticIngressService", () => {
           activeEntityRefs: [{ kind: "field", id: "field-42" }],
         },
       } as any,
-      legacyClassification: {
+      baselineClassification: {
         targetRole: "agronomist",
         intent: "compute_deviations",
         toolName: RaiToolName.ComputeDeviations,
@@ -1158,7 +1178,7 @@ describe("SemanticIngressService", () => {
         intent: "compute_deviations",
         toolName: RaiToolName.ComputeDeviations,
         confidence: 0.82,
-        method: "semantic_router_shadow",
+        method: "semantic_route_shadow",
         reason: "responsibility:agro:compute_deviations",
       },
       finalRequestedToolCalls: [
@@ -1178,7 +1198,7 @@ describe("SemanticIngressService", () => {
           intent: "compute_deviations",
           toolName: RaiToolName.ComputeDeviations,
           confidence: 0.82,
-          method: "semantic_router_shadow",
+          method: "semantic_route_shadow",
           reason: "responsibility:agro:compute_deviations",
         },
         semanticIntent: {
@@ -1227,7 +1247,7 @@ describe("SemanticIngressService", () => {
           workspaceStateDigest: "digest",
         },
         latencyMs: 5,
-        executionPath: "semantic_router_shadow",
+        executionPath: "semantic_route_shadow",
         routingContext: {
           source: "shadow",
           promotedPrimary: false,
@@ -1304,12 +1324,12 @@ describe("SemanticIngressService", () => {
           },
         ],
       } as any,
-      legacyClassification: {
+      baselineClassification: {
         targetRole: "crm_agent",
         intent: "register_counterparty",
         toolName: RaiToolName.RegisterCounterparty,
         confidence: 0.82,
-        method: "tool_call_primary",
+        method: "explicit_tool_path",
         reason: "explicit_tool",
       },
       finalClassification: {
@@ -1317,7 +1337,7 @@ describe("SemanticIngressService", () => {
         intent: "register_counterparty",
         toolName: RaiToolName.RegisterCounterparty,
         confidence: 0.82,
-        method: "tool_call_primary",
+        method: "explicit_tool_path",
         reason: "explicit_tool",
       },
       finalRequestedToolCalls: [
@@ -1339,7 +1359,7 @@ describe("SemanticIngressService", () => {
           intent: "register_counterparty",
           toolName: RaiToolName.RegisterCounterparty,
           confidence: 0.82,
-          method: "semantic_router_shadow",
+          method: "semantic_route_shadow",
           reason: "crm_write_candidate",
         },
         semanticIntent: {
@@ -1388,7 +1408,7 @@ describe("SemanticIngressService", () => {
           workspaceStateDigest: "digest",
         },
         latencyMs: 5,
-        executionPath: "semantic_router_shadow",
+        executionPath: "semantic_route_shadow",
         routingContext: {
           source: "shadow",
           promotedPrimary: false,
@@ -1442,5 +1462,142 @@ describe("SemanticIngressService", () => {
       }),
     );
     expect(frame.explanation).toContain("требует governed confirmation");
+  });
+
+  it("explicitPlannerToolCalls: два tool call без composite и без TechMap → multi-branch SubIntentGraph", () => {
+    const frame = service.buildFrame({
+      request: { message: "два тула", workspaceContext: { route: "/consulting/fields" } } as any,
+      baselineClassification: {
+        targetRole: "agronomist",
+        intent: "compute_deviations",
+        toolName: RaiToolName.ComputeDeviations,
+        confidence: 0.8,
+        method: "regex",
+        reason: "x",
+      },
+      finalClassification: {
+        targetRole: "agronomist",
+        intent: "compute_deviations",
+        toolName: RaiToolName.ComputeDeviations,
+        confidence: 0.8,
+        method: "explicit_tool_path",
+        reason: "x",
+      },
+      finalRequestedToolCalls: [
+        { name: RaiToolName.ComputeDeviations, payload: {} },
+        { name: RaiToolName.QueryKnowledge, payload: { query: "x" } },
+      ],
+      semanticEvaluation: {
+        promotedPrimary: false,
+        sliceId: null,
+        requestedToolCalls: [],
+        classification: {
+          targetRole: "agronomist",
+          intent: "compute_deviations",
+          toolName: RaiToolName.ComputeDeviations,
+          confidence: 0.8,
+          method: "semantic_route_shadow",
+          reason: "x",
+        },
+        semanticIntent: {
+          domain: "unknown",
+          entity: "unknown",
+          action: "unknown",
+          interactionMode: "unknown",
+          mutationRisk: "unknown",
+          filters: {},
+          requiredContext: [],
+          focusObject: null,
+          dialogState: {
+            activeFlow: null,
+            pendingClarificationKeys: [],
+            lastUserAction: null,
+          },
+          resolvability: "missing",
+          ambiguityType: "no_matching_route",
+          confidenceBand: "low",
+          reason: "mock",
+        },
+        routeDecision: {
+          decisionType: "abstain",
+          recommendedExecutionMode: "no_op",
+          eligibleTools: [],
+          eligibleFlows: [],
+          requiredContextMissing: [],
+          policyChecksRequired: [],
+          needsConfirmation: false,
+          needsClarification: false,
+          abstainReason: "mock",
+          policyBlockReason: null,
+        },
+        candidateRoutes: [],
+        divergence: {
+          isMismatch: false,
+          mismatchKinds: [],
+          summary: "match",
+          legacyRouteKey: "legacy",
+          semanticRouteKey: "semantic",
+        },
+        versionInfo: {
+          routerVersion: "semantic-router-v1",
+          promptVersion: "semantic-router-prompt-v1",
+          toolsetVersion: "toolset",
+          workspaceStateDigest: "digest",
+        },
+        latencyMs: 1,
+        executionPath: "semantic_route_shadow",
+        routingContext: {
+          source: "shadow",
+          promotedPrimary: false,
+          enforceCapabilityGating: false,
+          sliceId: null,
+          semanticIntent: {
+            domain: "unknown",
+            entity: "unknown",
+            action: "unknown",
+            interactionMode: "unknown",
+            mutationRisk: "unknown",
+            filters: {},
+            requiredContext: [],
+            focusObject: null,
+            dialogState: {
+              activeFlow: null,
+              pendingClarificationKeys: [],
+              lastUserAction: null,
+            },
+            resolvability: "missing",
+            ambiguityType: "no_matching_route",
+            confidenceBand: "low",
+            reason: "mock",
+          },
+          routeDecision: {
+            decisionType: "abstain",
+            recommendedExecutionMode: "no_op",
+            eligibleTools: [],
+            eligibleFlows: [],
+            requiredContextMissing: [],
+            policyChecksRequired: [],
+            needsConfirmation: false,
+            needsClarification: false,
+            abstainReason: "mock",
+            policyBlockReason: null,
+          },
+          candidateRoutes: [],
+        },
+        llmUsed: false,
+        llmError: null,
+      } as any,
+    });
+
+    expect(frame.explicitPlannerToolCalls).toHaveLength(2);
+    expect(frame.subIntentGraph?.branches).toHaveLength(2);
+    expect(frame.subIntentGraph?.branches.map((b) => b.toolName)).toEqual([
+      RaiToolName.ComputeDeviations,
+      RaiToolName.QueryKnowledge,
+    ]);
+    expect(frame.explicitPlannerToolCalls?.[0]?.payload).toEqual({});
+    expect(frame.explicitPlannerToolCalls?.[1]?.payload).toEqual({ query: "x" });
+    expect(frame.subIntentGraph?.branches[0]?.payload).toEqual({});
+    expect(frame.subIntentGraph?.branches[1]?.payload).toEqual({ query: "x" });
   });
 });

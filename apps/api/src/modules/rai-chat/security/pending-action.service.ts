@@ -83,6 +83,19 @@ export class PendingActionService {
     return this.getByIdAndCompany(actionId, companyId);
   }
 
+  /** Проверка перед resume планировщика: запись существует и в финальном утверждении. */
+  async assertApprovedFinalForPlannerResume(
+    actionId: string,
+    companyId: string,
+  ): Promise<void> {
+    const action = await this.get(actionId, companyId);
+    if (action.status !== PendingActionStatus.APPROVED_FINAL) {
+      throw new Error(
+        `PLANNER_RESUME_PENDING_ACTION_NOT_FINAL: status=${action.status}`,
+      );
+    }
+  }
+
   async reject(actionId: string, companyId: string) {
     const action = await this.getByIdAndCompany(actionId, companyId);
     if (action.status !== PendingActionStatus.PENDING && action.status !== PendingActionStatus.APPROVED_FIRST) {

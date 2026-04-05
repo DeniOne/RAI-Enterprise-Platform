@@ -22,6 +22,7 @@ import {
 import { AgentExecutionAdapterService } from "./agent-execution-adapter.service";
 import { RuntimeGovernanceControlService } from "./runtime-governance-control.service";
 import { RaiToolName as SharedRaiToolName } from "../../../shared/rai-chat/rai-tools.types";
+import { TOOL_RISK_MAP } from "../../../shared/rai-chat/rai-tools.types";
 
 export interface ExecutionResult {
   executedTools: Array<{ name: RaiToolName; result: unknown }>;
@@ -54,8 +55,11 @@ export class AgentRuntimeService {
     request: AgentExecutionRequest,
     actorContext: RaiToolActorContext,
   ): Promise<ExecutionResult> {
-    const runtimeMode = process.env.RAI_AGENT_RUNTIME_MODE ?? "tool-first-legacy";
-    if (runtimeMode !== "agent-first-hybrid") {
+    const runtimeMode = process.env.RAI_AGENT_RUNTIME_MODE ?? "agent-first-hybrid";
+    if (
+      runtimeMode !== "agent-first-hybrid" ||
+      this.requiresGovernedToolPath(request)
+    ) {
       return this.run({
         requestedToolCalls: request.requestedTools ?? [],
         actorContext,
@@ -89,8 +93,62 @@ export class AgentRuntimeService {
       };
     }
 
+    const kernelFilteredToolCalls = this.filterRequestedToolsByKernel(
+      request.requestedTools ?? [],
+      kernel,
+    );
+    if (
+      (request.requestedTools?.length ?? 0) > 0 &&
+      kernelFilteredToolCalls.length === 0
+    ) {
+      return {
+        executedTools: (request.requestedTools ?? []).map((call) => ({
+          name: call.name,
+          result: {
+            agentConfigBlocked: true,
+            reasonCode: "CAPABILITY_DENIED",
+          },
+        })),
+        agentExecution: {
+          role: request.role,
+          status: "FAILED",
+          executionPath: "explicit_tool_path",
+          structuredOutput: {
+            summary: "Запрошенный инструмент недоступен по runtime-конфигурации агента.",
+            resultType: "agent_config_blocked",
+            blockedToolNames: (request.requestedTools ?? []).map((call) => call.name),
+            policyFlags: ["agent_config_blocked"],
+          },
+          toolCalls: (request.requestedTools ?? []).map((call) => ({
+            name: call.name,
+            result: {
+              agentConfigBlocked: true,
+              reasonCode: "CAPABILITY_DENIED",
+            },
+          })),
+          connectorCalls: [],
+          evidence: [],
+          validation: { passed: false, reasons: ["agent_config_blocked"] },
+          fallbackUsed: true,
+          outputContractVersion: kernel.outputContract.responseSchemaVersion,
+          auditPayload: {
+            runtimeMode: "agent-first-hybrid",
+            autonomyMode: kernel.definition.defaultAutonomyMode ?? "advisory",
+            allowedToolNames: [],
+            blockedToolNames: (request.requestedTools ?? []).map((call) => call.name),
+            connectorNames: [],
+            outputContractId: kernel.outputContract.contractId,
+          },
+        },
+        runtimeGovernance: this.governanceControl.buildGovernanceMeta(
+          request.role,
+          "POLICY_BLOCKED",
+          true,
+        ),
+      };
+    }
     const requestedToolCalls = this.filterRequestedToolsBySemanticRoute(
-      this.filterRequestedToolsByKernel(request.requestedTools ?? [], kernel),
+      kernelFilteredToolCalls,
       request,
     );
     const runtimeOverrides = kernel.governancePolicy?.runtimeGovernanceOverrides;
@@ -124,7 +182,12 @@ export class AgentRuntimeService {
         runtimeGovernance,
         agentExecution: {
           ...this.buildUnavailableResult(request.role, kernel),
-          text: "Выполнение отклонено budget policy.",
+          structuredOutput: {
+            ...this.buildUnavailableResult(request.role, kernel).structuredOutput,
+            summary: "Выполнение отклонено budget policy.",
+            resultType: "policy_blocked",
+            policyFlags: ["budget_policy_denied"],
+          },
           runtimeBudget: budgetDecision,
           runtimeGovernance,
         },
@@ -442,6 +505,15 @@ export class AgentRuntimeService {
     }
   }
 
+  private requiresGovernedToolPath(request: AgentExecutionRequest): boolean {
+    return (request.requestedTools ?? []).some((call) => {
+      const riskInfo = TOOL_RISK_MAP[call.name as SharedRaiToolName];
+      return (
+        riskInfo?.riskLevel === "WRITE" || riskInfo?.riskLevel === "CRITICAL"
+      );
+    });
+  }
+
   private async dispatchAgent(
     request: AgentExecutionRequest,
     actorContext: RaiToolActorContext,
@@ -465,8 +537,11 @@ export class AgentRuntimeService {
     return {
       role,
       status: "FAILED",
-      text: `Agent ${role} unavailable.`,
-      structuredOutput: {},
+      structuredOutput: {
+        summary: `Agent ${role} unavailable.`,
+        resultType: "agent_unavailable",
+        policyFlags: ["agent_unavailable"],
+      },
       toolCalls: [],
       connectorCalls: [],
       evidence: [],

@@ -53,7 +53,7 @@ describe('ui-language formatters', () => {
         expect(formatGovernanceKeyLabel('READY_FOR_CANARY')).toBe('готово к канарейке');
         expect(formatGovernanceKeyLabel('ROLLBACK_RECOMMENDED')).toBe('рекомендован откат');
         expect(formatTrustLatencyProfileLabel('MULTI_SOURCE_READ')).toBe('чтение из нескольких источников');
-        expect(formatIngressSourceLabel('semantic_router_primary')).toBe('основной семантический маршрут');
+        expect(formatIngressSourceLabel('semantic_route_primary')).toBe('основной семантический маршрут');
         expect(formatToolLabel('tools')).toBe('Инструменты');
         expect(formatToolLabel('register_counterparty')).toBe('Регистрация контрагента');
     });

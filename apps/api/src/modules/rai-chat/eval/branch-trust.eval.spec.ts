@@ -1,4 +1,6 @@
 import { ResponseComposerService } from "../composer/response-composer.service";
+import { BranchStatePlaneService } from "../branch-state-plane.service";
+import { BranchSchedulerService } from "../planner/branch-scheduler.service";
 import { SemanticIngressService } from "../semantic-ingress.service";
 import { SupervisorAgent } from "../supervisor-agent.service";
 import { RaiToolName } from "../tools/rai-tools.types";
@@ -21,7 +23,7 @@ describe("Branch trust eval corpus", () => {
         agentExecution: {
           role: "agronomist",
           status: "COMPLETED",
-          executionPath: "tool_call_primary",
+          executionPath: "explicit_tool_path",
           text: "Сглаженный ответ, который нельзя показывать как истину.",
           structuredOutput: {
             summary: "Агро-ветка собрала первичный результат.",
@@ -108,7 +110,7 @@ describe("Branch trust eval corpus", () => {
           agentExecution: {
             role: "agronomist",
             status: "COMPLETED",
-            executionPath: "tool_call_primary",
+            executionPath: "explicit_tool_path",
             text: "Первичный агро-ответ.",
             structuredOutput: {
               summary: "Первичная ветка",
@@ -145,7 +147,7 @@ describe("Branch trust eval corpus", () => {
           agentExecution: {
             role: "knowledge",
             status: "COMPLETED",
-            executionPath: "tool_call_primary",
+            executionPath: "explicit_tool_path",
             text: "Knowledge cross-check подтверждает ограниченно.",
             structuredOutput: {
               summary: "Knowledge cross-check",
@@ -227,7 +229,7 @@ describe("Branch trust eval corpus", () => {
             intent: "agro.deviations.review",
             toolName: RaiToolName.ComputeDeviations,
             confidence: 1,
-            method: "tool_call_primary",
+            method: "explicit_tool_path",
             reason: "explicit_tool_call",
           },
           requestedToolCalls: [
@@ -263,7 +265,7 @@ describe("Branch trust eval corpus", () => {
           },
           routeDecision: {
             decisionType: "execute",
-            recommendedExecutionMode: "tool_call_primary",
+            recommendedExecutionMode: "direct_execute",
             eligibleTools: [RaiToolName.ComputeDeviations],
             eligibleFlows: [],
             requiredContextMissing: [],
@@ -275,10 +277,15 @@ describe("Branch trust eval corpus", () => {
           },
           candidateRoutes: [],
           divergence: null,
-          executionPath: "tool_call_primary",
+          executionPath: "explicit_tool_path",
         }),
       } as any,
       new SemanticIngressService(),
+      new BranchSchedulerService(),
+      new BranchStatePlaneService(),
+      {
+        assertApprovedFinalForPlannerResume: jest.fn().mockResolvedValue(undefined),
+      } as any,
       {
         getRolePolicy: jest.fn().mockReturnValue({
           trust: {
@@ -290,6 +297,9 @@ describe("Branch trust eval corpus", () => {
               crossCheckTriggeredMs: 1_500,
             },
           },
+        }),
+        getTrustBudget: jest.fn().mockReturnValue({
+          maxTrackedBranches: 4,
         }),
         resolveTrustLatencyBudgetMs: jest.fn().mockReturnValue(1_500),
       } as any,
@@ -390,7 +400,7 @@ describe("Branch trust eval corpus", () => {
         agentExecution: {
           role: "agronomist",
           status: "COMPLETED",
-          executionPath: "tool_call_primary",
+          executionPath: "explicit_tool_path",
           text: "Составной аналитический сценарий выполнен по плану.",
           structuredOutput: {
             summary: "agro execution fact and finance cost aggregation",

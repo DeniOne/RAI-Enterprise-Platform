@@ -49,7 +49,7 @@ export interface RoutingDecisionBreakdownDto {
 }
 
 export interface RoutingCollisionMatrixItemDto {
-  legacyRouteKey: string;
+  baselineRouteKey: string;
   semanticRouteKey: string;
   count: number;
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useRef, useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   api,
@@ -167,8 +168,17 @@ export function AiChatPanel({ variant = "overlay", shellHeight }: AiChatPanelPro
   const memoryHintsEnabled = webFeatureFlags.memoryHints;
   const chiefAgronomistPanelEnabled = webFeatureFlags.chiefAgronomistPanel;
   const isShell = variant === "shell";
-  const { messages, isLoading, sendMessage, dispatch, fsmState, panelMode } =
-    useAiChatStore();
+  const {
+    messages,
+    isLoading,
+    sendMessage,
+    dispatch,
+    fsmState,
+    panelMode,
+    threadId,
+    plannerMutationResume,
+    dismissPlannerMutationResume,
+  } = useAiChatStore();
   const context = useWorkspaceContextStore((s) => s.context);
   const authority = useAuthority();
   const [inputText, setInputText] = useState("");
@@ -736,6 +746,35 @@ export function AiChatPanel({ variant = "overlay", shellHeight }: AiChatPanelPro
             isShell ? "p-2.5" : "p-4",
           )}
         >
+          {plannerMutationResume && threadId ? (
+            <div
+              className={clsx(
+                "mb-2 rounded-lg border border-amber-200 bg-amber-50/95 text-amber-950",
+                isShell ? "px-2.5 py-2 text-[10px]" : "px-3 py-2.5 text-[11px]",
+              )}
+            >
+              <p className="font-medium">Нужно подтверждение в Башне управления</p>
+              <p className="mt-1 text-amber-900/90">
+                Утвердите PendingAction (финальный шаг), затем отправьте сообщение — запрос к агенту
+                продолжит план с подтверждённой мутацией.
+              </p>
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <Link
+                  href="/control-tower"
+                  className="inline-flex rounded-md border border-amber-300 bg-white px-2 py-1 font-medium text-amber-950 hover:bg-amber-100/80"
+                >
+                  Открыть Башню управления
+                </Link>
+                <button
+                  type="button"
+                  className="text-amber-800/80 underline decoration-amber-400/60 hover:text-amber-950"
+                  onClick={() => dismissPlannerMutationResume()}
+                >
+                  Скрыть подсказку
+                </button>
+              </div>
+            </div>
+          ) : null}
           <form onSubmit={handleSubmit} className="relative flex items-center">
             <input
               ref={inputRef}

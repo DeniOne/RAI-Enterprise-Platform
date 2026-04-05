@@ -73,9 +73,11 @@ describe("AgentExecutionAdapterService", () => {
 
     expect(agronomAgent.run).not.toHaveBeenCalled();
     expect(result.status).toBe("COMPLETED");
-    expect(result.executionPath).toBe("heuristic_fallback");
+    expect(result.executionPath).toBe("fallback_interpretation");
     expect(result.toolCalls).toEqual([]);
-    expect(result.text).toContain("Понял запрос по техкартам");
+    expect(result.structuredOutput.summary).toContain(
+      "Понял запрос по техкартам",
+    );
     expect(result.suggestedActions).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -125,7 +127,7 @@ describe("AgentExecutionAdapterService", () => {
     });
 
     expect(result.status).toBe("COMPLETED");
-    expect(result.executionPath).toBe("semantic_router_primary");
+    expect(result.executionPath).toBe("semantic_route_primary");
     expect(agronomAgent.run).toHaveBeenCalledWith(
       expect.objectContaining({
         intent: "generate_tech_map_draft",
@@ -169,8 +171,10 @@ describe("AgentExecutionAdapterService", () => {
 
     expect(agronomAgent.run).not.toHaveBeenCalled();
     expect(result.status).toBe("COMPLETED");
-    expect(result.executionPath).toBe("heuristic_fallback");
-    expect(result.text).toContain("Понял запрос по техкартам");
+    expect(result.executionPath).toBe("fallback_interpretation");
+    expect(result.structuredOutput.summary).toContain(
+      "Понял запрос по техкартам",
+    );
     expect(result.suggestedActions).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -182,7 +186,7 @@ describe("AgentExecutionAdapterService", () => {
     );
   });
 
-  it("использует tool_call_primary при explicit compute_deviations", async () => {
+  it("использует explicit_tool_path при explicit compute_deviations", async () => {
     agronomAgent.run.mockResolvedValueOnce({
       status: "COMPLETED",
       explain: "ok",
@@ -214,7 +218,7 @@ describe("AgentExecutionAdapterService", () => {
     });
 
     expect(result.status).toBe("COMPLETED");
-    expect(result.executionPath).toBe("tool_call_primary");
+    expect(result.executionPath).toBe("explicit_tool_path");
     expect(result.toolCalls).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -224,7 +228,7 @@ describe("AgentExecutionAdapterService", () => {
     );
   });
 
-  it("сохраняет semantic_router_primary для compute_deviations при первичном semantic routing", async () => {
+  it("сохраняет semantic_route_primary для compute_deviations при первичном semantic routing", async () => {
     agronomAgent.run.mockResolvedValueOnce({
       status: "COMPLETED",
       explain: "ok",
@@ -265,7 +269,7 @@ describe("AgentExecutionAdapterService", () => {
     });
 
     expect(result.status).toBe("COMPLETED");
-    expect(result.executionPath).toBe("semantic_router_primary");
+    expect(result.executionPath).toBe("semantic_route_primary");
     expect(agronomAgent.run).toHaveBeenCalledWith(
       expect.objectContaining({
         intent: "compute_deviations",
@@ -274,7 +278,7 @@ describe("AgentExecutionAdapterService", () => {
     );
   });
 
-  it("сохраняет semantic_router_primary для compute_plan_fact при первичном semantic routing", async () => {
+  it("сохраняет semantic_route_primary для compute_plan_fact при первичном semantic routing", async () => {
     economistAgent.run.mockResolvedValueOnce({
       status: "COMPLETED",
       explain: "ok",
@@ -321,7 +325,7 @@ describe("AgentExecutionAdapterService", () => {
     });
 
     expect(result.status).toBe("COMPLETED");
-    expect(result.executionPath).toBe("semantic_router_primary");
+    expect(result.executionPath).toBe("semantic_route_primary");
     expect(economistAgent.run).toHaveBeenCalledWith(
       expect.objectContaining({
         intent: "compute_plan_fact",
@@ -330,7 +334,7 @@ describe("AgentExecutionAdapterService", () => {
     );
   });
 
-  it("сохраняет semantic_router_primary для simulate_scenario при первичном semantic routing", async () => {
+  it("сохраняет semantic_route_primary для simulate_scenario при первичном semantic routing", async () => {
     economistAgent.run.mockResolvedValueOnce({
       status: "COMPLETED",
       explain: "scenario ok",
@@ -374,7 +378,7 @@ describe("AgentExecutionAdapterService", () => {
     });
 
     expect(result.status).toBe("COMPLETED");
-    expect(result.executionPath).toBe("semantic_router_primary");
+    expect(result.executionPath).toBe("semantic_route_primary");
     expect(result.toolCalls).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -390,7 +394,7 @@ describe("AgentExecutionAdapterService", () => {
     );
   });
 
-  it("сохраняет semantic_router_primary для compute_risk_assessment при первичном semantic routing", async () => {
+  it("сохраняет semantic_route_primary для compute_risk_assessment при первичном semantic routing", async () => {
     economistAgent.run.mockResolvedValueOnce({
       status: "COMPLETED",
       explain: "risk ok",
@@ -434,7 +438,7 @@ describe("AgentExecutionAdapterService", () => {
     });
 
     expect(result.status).toBe("COMPLETED");
-    expect(result.executionPath).toBe("semantic_router_primary");
+    expect(result.executionPath).toBe("semantic_route_primary");
     expect(result.toolCalls).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -450,7 +454,7 @@ describe("AgentExecutionAdapterService", () => {
     );
   });
 
-  it("сохраняет semantic_router_primary для review_account_workspace и прокидывает query", async () => {
+  it("сохраняет semantic_route_primary для review_account_workspace и прокидывает query", async () => {
     crmAgent.run.mockResolvedValueOnce({
       status: "COMPLETED",
       explain: "crm ok",
@@ -494,7 +498,7 @@ describe("AgentExecutionAdapterService", () => {
     });
 
     expect(result.status).toBe("COMPLETED");
-    expect(result.executionPath).toBe("semantic_router_primary");
+    expect(result.executionPath).toBe("semantic_route_primary");
     expect(crmAgent.run).toHaveBeenCalledWith(
       expect.objectContaining({
         intent: "review_account_workspace",
@@ -504,7 +508,7 @@ describe("AgentExecutionAdapterService", () => {
     );
   });
 
-  it("сохраняет semantic_router_primary для lookup_counterparty_by_inn и прокидывает ИНН из запроса", async () => {
+  it("сохраняет semantic_route_primary для lookup_counterparty_by_inn и прокидывает ИНН из запроса", async () => {
     crmAgent.run.mockResolvedValueOnce({
       status: "COMPLETED",
       explain: "crm inn ok",
@@ -548,7 +552,7 @@ describe("AgentExecutionAdapterService", () => {
     });
 
     expect(result.status).toBe("COMPLETED");
-    expect(result.executionPath).toBe("semantic_router_primary");
+    expect(result.executionPath).toBe("semantic_route_primary");
     expect(crmAgent.run).toHaveBeenCalledWith(
       expect.objectContaining({
         intent: "lookup_counterparty_by_inn",
@@ -599,7 +603,7 @@ describe("AgentExecutionAdapterService", () => {
             intent: "register_counterparty",
             toolName: RaiToolName.RegisterCounterparty,
             decisionType: "execute",
-            source: "legacy_contracts",
+            source: "fallback_normalization",
           },
           operationAuthority: "direct_user_command",
           missingSlots: [],
@@ -679,7 +683,7 @@ describe("AgentExecutionAdapterService", () => {
     });
 
     expect(result.status).toBe("COMPLETED");
-    expect(result.executionPath).toBe("semantic_router_primary");
+    expect(result.executionPath).toBe("semantic_route_primary");
     expect(crmAgent.run).toHaveBeenCalledWith(
       expect.objectContaining({
         intent: "review_account_workspace",
@@ -716,7 +720,7 @@ describe("AgentExecutionAdapterService", () => {
             intent: "classify_dialog_thread",
             toolName: RaiToolName.ClassifyDialogThread,
             decisionType: "execute",
-            source: "legacy_contracts",
+            source: "fallback_normalization",
           },
           operationAuthority: "unknown",
           missingSlots: [],
@@ -795,7 +799,7 @@ describe("AgentExecutionAdapterService", () => {
     });
 
     expect(result.status).toBe("COMPLETED");
-    expect(result.executionPath).toBe("semantic_router_primary");
+    expect(result.executionPath).toBe("semantic_route_primary");
     expect(frontOfficeAgent.run).toHaveBeenCalledWith(
       expect.objectContaining({
         intent: "classify_dialog_thread",
@@ -848,7 +852,7 @@ describe("AgentExecutionAdapterService", () => {
     });
 
     expect(result.status).toBe("COMPLETED");
-    expect(result.executionPath).toBe("semantic_router_primary");
+    expect(result.executionPath).toBe("semantic_route_primary");
     expect(frontOfficeAgent.run).toHaveBeenCalledWith(
       expect.objectContaining({
         intent: "classify_dialog_thread",
@@ -1055,7 +1059,7 @@ describe("AgentExecutionAdapterService", () => {
     );
   });
 
-  it("сохраняет semantic_router_primary для query_knowledge и прокидывает исходный запрос", async () => {
+  it("сохраняет semantic_route_primary для query_knowledge и прокидывает исходный запрос", async () => {
     knowledgeAgent.run.mockResolvedValueOnce({
       status: "COMPLETED",
       explain: "knowledge ok",
@@ -1098,7 +1102,7 @@ describe("AgentExecutionAdapterService", () => {
     });
 
     expect(result.status).toBe("COMPLETED");
-    expect(result.executionPath).toBe("semantic_router_primary");
+    expect(result.executionPath).toBe("semantic_route_primary");
     expect(result.toolCalls).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -1114,7 +1118,7 @@ describe("AgentExecutionAdapterService", () => {
     );
   });
 
-  it("сохраняет semantic_router_primary для review_commerce_contract и прокидывает query", async () => {
+  it("сохраняет semantic_route_primary для review_commerce_contract и прокидывает query", async () => {
     contractsAgent.run.mockResolvedValueOnce({
       status: "COMPLETED",
       explain: "contract ok",
@@ -1158,7 +1162,7 @@ describe("AgentExecutionAdapterService", () => {
     });
 
     expect(result.status).toBe("COMPLETED");
-    expect(result.executionPath).toBe("semantic_router_primary");
+    expect(result.executionPath).toBe("semantic_route_primary");
     expect(contractsAgent.run).toHaveBeenCalledWith(
       expect.objectContaining({
         intent: "review_commerce_contract",
@@ -1218,7 +1222,7 @@ describe("AgentExecutionAdapterService", () => {
     });
 
     expect(result.status).toBe("NEEDS_MORE_DATA");
-    expect(result.executionPath).toBe("semantic_router_primary");
+    expect(result.executionPath).toBe("semantic_route_primary");
     expect(contractsAgent.run).toHaveBeenCalledWith(
       expect.objectContaining({
         intent: "review_commerce_contract",
@@ -1226,7 +1230,7 @@ describe("AgentExecutionAdapterService", () => {
     );
   });
 
-  it("сохраняет semantic_router_primary для review_ar_balance и прокидывает invoiceId", async () => {
+  it("сохраняет semantic_route_primary для review_ar_balance и прокидывает invoiceId", async () => {
     contractsAgent.run.mockResolvedValueOnce({
       status: "COMPLETED",
       explain: "ar ok",
@@ -1275,7 +1279,7 @@ describe("AgentExecutionAdapterService", () => {
     });
 
     expect(result.status).toBe("COMPLETED");
-    expect(result.executionPath).toBe("semantic_router_primary");
+    expect(result.executionPath).toBe("semantic_route_primary");
     expect(contractsAgent.run).toHaveBeenCalledWith(
       expect.objectContaining({
         intent: "review_ar_balance",

@@ -1535,6 +1535,25 @@ export interface RaiChatPendingClarificationDto {
     items?: RaiChatPendingClarificationItemDto[];
 }
 
+export interface ExecutionExplainabilityBranchV1 {
+    branchId: string;
+    lifecycle: string;
+    mutationState: string;
+    policyDecision: string | null;
+    pendingActionId?: string;
+}
+
+export interface ExecutionExplainabilityConcurrencyDeferralV1 {
+    cap: number;
+    deferredBranchIds: string[];
+}
+
+export interface ExecutionExplainabilityV1 {
+    version: 'v1';
+    branches: ExecutionExplainabilityBranchV1[];
+    concurrencyDeferral?: ExecutionExplainabilityConcurrencyDeferralV1;
+}
+
 export interface RaiChatResponseDto {
     text?: string;
     threadId?: string;
@@ -1551,6 +1570,7 @@ export interface RaiChatResponseDto {
     branchTrustAssessments?: TraceForensicsBranchTrustAssessmentDto[];
     branchCompositions?: TraceForensicsBranchCompositionDto[];
     trustSummary?: UserFacingTrustSummaryDto;
+    executionExplainability?: ExecutionExplainabilityV1;
 }
 
 export interface RaiChatClarificationResumeDto {
@@ -1572,6 +1592,8 @@ export interface RaiChatSubmitRequestDto {
     originMessageId?: string | null;
     clarificationResume?: RaiChatClarificationResumeDto;
     signal?: AbortSignal;
+    executionPlannerMutationApproved?: boolean;
+    executionPlannerApprovedPendingActionId?: string;
 }
 
 export async function submitRaiChatRequest(
@@ -1582,6 +1604,8 @@ export async function submitRaiChatRequest(
         params.message,
         params.originMessageId ?? null,
         params.clarificationResume?.windowId ?? null,
+        params.executionPlannerMutationApproved === true ? 'planner_resume' : null,
+        params.executionPlannerApprovedPendingActionId ?? null,
         serializeIdempotencyPayload(params.workspaceContext ?? {}),
     ]);
 
@@ -1596,6 +1620,16 @@ export async function submitRaiChatRequest(
             message: params.message,
             workspaceContext: params.workspaceContext,
             clarificationResume: params.clarificationResume,
+            ...(params.executionPlannerMutationApproved === true
+                ? { executionPlannerMutationApproved: true }
+                : {}),
+            ...(typeof params.executionPlannerApprovedPendingActionId === 'string'
+                && params.executionPlannerApprovedPendingActionId.trim().length > 0
+                ? {
+                    executionPlannerApprovedPendingActionId:
+                        params.executionPlannerApprovedPendingActionId.trim(),
+                }
+                : {}),
         }),
         signal: params.signal,
     });
@@ -1808,7 +1842,13 @@ export interface TraceForensicsSemanticIngressFrameDto {
         intent: string | null;
         toolName: string | null;
         decisionType: string;
-        source: 'clarification_resume' | 'explicit_tool_call' | 'legacy_contracts' | 'semantic_router_primary' | 'semantic_router_shadow';
+        source:
+            | 'clarification_resume'
+            | 'explicit_tool_call'
+            | 'fallback_normalization'
+            | 'semantic_route_primary'
+            | 'semantic_route_shadow'
+            | 'legacy_contracts';
     };
     operationAuthority: 'direct_user_command' | 'workflow_resume' | 'delegated_or_autonomous' | 'unknown';
     missingSlots: string[];

@@ -415,8 +415,7 @@ export class ExplainabilityPanelService {
       )
       .filter((item) =>
         params.targetRole
-          ? (item.telemetry.legacyClassification.targetRole ?? "unknown") ===
-            params.targetRole
+          ? item.telemetry.baselineClassification?.targetRole === params.targetRole
           : true,
       )
       .filter((item) =>
@@ -493,7 +492,8 @@ export class ExplainabilityPanelService {
     >();
 
     for (const item of events) {
-      const targetRole = item.telemetry.legacyClassification.targetRole ?? "unknown";
+      const baselineClassification = item.telemetry.baselineClassification;
+      const targetRole = baselineClassification?.targetRole ?? "unknown";
       const clusterKey = item.telemetry.divergence.summary;
       const cluster = clusterMap.get(clusterKey) ?? {
         label: clusterKey,
@@ -516,7 +516,7 @@ export class ExplainabilityPanelService {
       decisionMap.set(decisionType, (decisionMap.get(decisionType) ?? 0) + 1);
 
       const collisionKey = [
-        item.telemetry.divergence.legacyRouteKey,
+        item.telemetry.divergence.baselineRouteKey ?? "baseline_unknown",
         item.telemetry.divergence.semanticRouteKey,
       ].join(" -> ");
       collisionMap.set(collisionKey, (collisionMap.get(collisionKey) ?? 0) + 1);
@@ -659,9 +659,9 @@ export class ExplainabilityPanelService {
         .sort((left, right) => right[1] - left[1])
         .slice(0, 10)
         .map(([key, count]) => {
-          const [legacyRouteKey, semanticRouteKey] = key.split(" -> ");
+          const [baselineRouteKey, semanticRouteKey] = key.split(" -> ");
           return {
-            legacyRouteKey,
+            baselineRouteKey,
             semanticRouteKey,
             count,
           };
@@ -794,7 +794,8 @@ export class ExplainabilityPanelService {
         createdAt: item.createdAt.toISOString(),
         summary: item.telemetry.divergence.summary,
         sampleQuery: this.deepMask(item.telemetry.userQueryRedacted) as string,
-        targetRole: item.telemetry.legacyClassification.targetRole ?? "unknown",
+        targetRole:
+          item.telemetry.baselineClassification?.targetRole ?? "unknown",
         decisionType: item.telemetry.routeDecision.decisionType,
         promotedPrimary: item.telemetry.promotedPrimary,
       })),

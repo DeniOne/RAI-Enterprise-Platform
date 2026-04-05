@@ -46,6 +46,12 @@ export class SupervisorForensicsService {
     delegationChain?: Array<Record<string, unknown>>;
     routingTelemetry?: RoutingTelemetryEvent;
     semanticIngressFrame?: SemanticIngressFrame;
+    /** Телеметрия планировщика веток для operator-plane */
+    plannerBranchTelemetry?: Record<string, unknown> | null;
+    /** Узкий контракт control-tower v1 (promotion + сигналы планировщика) */
+    controlTowerPlannerEnvelope?: Record<string, unknown> | null;
+    /** Только `SubIntentGraph` (без полного ingress frame) для forensics / operator-plane */
+    controlTowerSubIntentGraphSnapshot?: Record<string, unknown> | null;
   }): Promise<string | null> {
     const metadataObj: Record<string, unknown> = {};
     if (params.replayInput) {
@@ -103,6 +109,17 @@ export class SupervisorForensicsService {
     }
     if (params.semanticIngressFrame) {
       metadataObj.semanticIngressFrame = params.semanticIngressFrame;
+    }
+    if (params.plannerBranchTelemetry) {
+      metadataObj.plannerBranchTelemetry = params.plannerBranchTelemetry;
+    }
+    if (params.controlTowerPlannerEnvelope) {
+      metadataObj.controlTowerPlannerEnvelope =
+        params.controlTowerPlannerEnvelope;
+    }
+    if (params.controlTowerSubIntentGraphSnapshot) {
+      metadataObj.controlTowerSubIntentGraphSnapshot =
+        params.controlTowerSubIntentGraphSnapshot;
     }
 
     const metadata: Prisma.InputJsonValue | undefined =

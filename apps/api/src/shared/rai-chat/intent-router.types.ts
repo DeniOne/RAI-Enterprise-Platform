@@ -10,10 +10,10 @@ export interface IntentClassification {
   method:
     | "regex"
     | "llm"
-    | "tool_call_primary"
+    | "explicit_tool_path"
     | "clarification_resume"
-    | "semantic_router_shadow"
-    | "semantic_router_primary";
+    | "semantic_route_shadow"
+    | "semantic_route_primary";
   reason: string;
 }
 

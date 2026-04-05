@@ -61,4 +61,11 @@ describe("RuntimeGovernancePolicyService", () => {
       service.resolveTrustLatencyBudgetMs("crm_agent", "HAPPY_PATH"),
     ).toBe(300);
   });
+
+  it("planner + multi-branch trust: у crm_agent заданы лимиты параллелизма и cross-check", () => {
+    const crm = service.getRolePolicy("crm_agent");
+    expect(crm.concurrency.maxParallelToolCalls).toBeGreaterThanOrEqual(1);
+    expect(crm.trust.maxCrossCheckBranches).toBeGreaterThanOrEqual(1);
+    expect(crm.concurrency.deadlineMs).toBeGreaterThan(0);
+  });
 });

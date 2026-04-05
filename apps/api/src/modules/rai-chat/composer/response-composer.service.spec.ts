@@ -28,6 +28,51 @@ describe("ResponseComposerService", () => {
     expect(service).toBeDefined();
   });
 
+  it("строит текст из structuredOutput, даже если agentExecution.text отсутствует", async () => {
+    const response = await service.buildResponse({
+      request: {
+        message: "дай итог",
+        threadId: "th-structured-only",
+        workspaceContext: { route: "/consulting/dashboard" },
+      },
+      executionResult: {
+        executedTools: [],
+        agentExecution: {
+          role: "agronomist",
+          status: "COMPLETED",
+          structuredOutput: {
+            summary: "Итог собран из structured payload.",
+            confidence: 0.9,
+          },
+          toolCalls: [],
+          connectorCalls: [],
+          evidence: [],
+          validation: { passed: true, reasons: [] },
+          fallbackUsed: false,
+          outputContractVersion: "v1",
+          auditPayload: {
+            runtimeMode: "agent-first-hybrid",
+            autonomyMode: "advisory",
+            allowedToolNames: [],
+            blockedToolNames: [],
+            connectorNames: [],
+            outputContractId: "agronom-v1",
+          },
+        },
+      } as any,
+      recallResult: {
+        recall: { items: [] },
+        profile: {},
+      } as any,
+      externalSignalResult: { feedbackStored: false },
+      traceId: "tr-structured-only",
+      threadId: "th-structured-only",
+      companyId: "company-1",
+    });
+
+    expect(response.text).toContain("Итог собран из structured payload.");
+  });
+
   it("buildSuggestedActions returns echo and workspace snapshot when route present", () => {
     const actions = service.buildSuggestedActions({
       message: "hi",
@@ -666,14 +711,15 @@ describe("ResponseComposerService", () => {
         executedTools: [],
         agentExecution: {
           role: "crm_agent",
-          text: "Открываю карточку контрагента ООО \"СЫСОИ\".",
           fallbackUsed: false,
           validation: { actionAllowed: true, explain: "" },
           outputContractVersion: "v1",
           toolCalls: [],
           confidence: 0.91,
           evidence: [],
-          structuredOutput: null,
+          structuredOutput: {
+            summary: "Открываю карточку контрагента ООО \"СЫСОИ\".",
+          },
           status: "COMPLETED",
         },
       } as any,
@@ -838,7 +884,7 @@ describe("ResponseComposerService", () => {
         agentExecution: {
           role: "crm_agent",
           status: "COMPLETED",
-          executionPath: "tool_call_primary",
+          executionPath: "explicit_tool_path",
           text: "Составной CRM-сценарий выполнен.",
           structuredOutput: {
             compositePlan: {
@@ -968,7 +1014,7 @@ describe("ResponseComposerService", () => {
         agentExecution: {
           role: "agronomist",
           status: "COMPLETED",
-          executionPath: "tool_call_primary",
+          executionPath: "explicit_tool_path",
           text: "Аналитический композит выполнен.",
           structuredOutput: {
             compositePlan: {
@@ -1179,7 +1225,7 @@ describe("ResponseComposerService", () => {
         agentExecution: {
           role: "agronomist",
           status: "COMPLETED",
-          executionPath: "tool_call_primary",
+          executionPath: "explicit_tool_path",
           text: "Первичный ответ агронома.",
           structuredOutput: {
             summary: "Агрономическая оценка собрана.",
@@ -1233,7 +1279,7 @@ describe("ResponseComposerService", () => {
         agentExecution: {
           role: "agronomist",
           status: "COMPLETED",
-          executionPath: "tool_call_primary",
+          executionPath: "explicit_tool_path",
           text: "Гладкий ответ, который нельзя показывать как факт.",
           structuredOutput: {
             summary: "Агрономическая ветка",
@@ -1317,7 +1363,7 @@ describe("ResponseComposerService", () => {
         agentExecution: {
           role: "economist",
           status: "COMPLETED",
-          executionPath: "tool_call_primary",
+          executionPath: "explicit_tool_path",
           text: "Первичный ответ экономиста.",
           structuredOutput: {
             summary: "Экономическая ветка.",
@@ -1401,7 +1447,7 @@ describe("ResponseComposerService", () => {
         agentExecution: {
           role: "agronomist",
           status: "COMPLETED",
-          executionPath: "tool_call_primary",
+          executionPath: "explicit_tool_path",
           text: "Базовый текст.",
           structuredOutput: {
             summary: "Базовый текст.",

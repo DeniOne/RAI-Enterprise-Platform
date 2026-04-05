@@ -82,6 +82,8 @@ import { SecretsModule } from "../../shared/config/secrets.module";
 import { SemanticRouterService } from "./semantic-router/semantic-router.service";
 import { RoutingCaseMemoryService } from "./semantic-router/routing-case-memory.service";
 import { SemanticIngressService } from "./semantic-ingress.service";
+import { BranchSchedulerService } from "./planner/branch-scheduler.service";
+import { BranchStatePlaneService } from "./branch-state-plane.service";
 
 @Module({
   imports: [
@@ -133,6 +135,8 @@ import { SemanticIngressService } from "./semantic-ingress.service";
     ResponseComposerService,
     SemanticRouterService,
     SemanticIngressService,
+    BranchSchedulerService,
+    BranchStatePlaneService,
     RoutingCaseMemoryService,
     RaiChatService,
     SupervisorAgent,

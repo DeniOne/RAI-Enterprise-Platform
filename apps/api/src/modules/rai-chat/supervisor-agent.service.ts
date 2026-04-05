@@ -9,7 +9,10 @@ import { ResponseComposerService } from "./composer/response-composer.service";
 import { ExternalSignalsService } from "./external-signals.service";
 import { TraceSummaryService } from "./trace-summary.service";
 import { TruthfulnessEngineService } from "./truthfulness-engine.service";
-import { AgentExecutionRequest } from "./agent-platform/agent-platform.types";
+import {
+  AgentExecutionAuditPayload,
+  AgentExecutionRequest,
+} from "./agent-platform/agent-platform.types";
 import { RaiToolName } from "./tools/rai-tools.types";
 import {
   buildResumeExecutionPlan,
@@ -35,10 +38,36 @@ import {
   CompositeWorkflowStageContract,
   CompositeWorkflowStageStatus,
 } from "../../shared/rai-chat/composite-orchestration.types";
+import {
+  CompositeStagePayloadArtifact,
+  resolveCompositeStagePayload,
+} from "../../shared/rai-chat/composite-stage-payload-resolver";
 import { BranchTrustInputs } from "./truthfulness-engine.service";
 import { RuntimeTrustLatencyProfile } from "../../shared/rai-chat/runtime-governance-policy.types";
 import { SemanticIngressService } from "./semantic-ingress.service";
+import { BranchSchedulerService } from "./planner/branch-scheduler.service";
+import { BranchStatePlaneService } from "./branch-state-plane.service";
+import { PendingActionService } from "./security/pending-action.service";
+import { buildBranchPlannerTelemetrySnapshot } from "../../shared/rai-chat/branch-runtime-telemetry";
+import { resolvePlannerRuntimePathEnabled } from "../../shared/rai-chat/planner-promotion-policy";
+import {
+  buildControlTowerPlannerEnvelopeV1,
+  buildControlTowerSubIntentGraphSnapshotV1,
+} from "../../shared/rai-chat/control-tower-planner-envelope";
+import { resolveAgentExecutionSummary } from "../../shared/rai-chat/agent-execution-summary";
+import {
+  advanceRunnableRootsToRunning,
+  applyPlannerMutationApprovalToSurface,
+  finalizeNamedBranchFromExecution,
+  finalizeSurfaceFromExecution,
+  isPlannerSliceFullyTerminal,
+} from "../../shared/rai-chat/execution-surface-runtime";
 import { SemanticIngressFrame } from "../../shared/rai-chat/semantic-ingress.types";
+import type {
+  ExecutionPlan,
+  ExecutionPlanBranch,
+  ExecutionSurfaceState,
+} from "../../shared/rai-chat/execution-target-state.types";
 
 @Injectable()
 export class SupervisorAgent {
@@ -54,6 +83,9 @@ export class SupervisorAgent {
     private readonly supervisorForensics: SupervisorForensicsService,
     private readonly semanticRouter: SemanticRouterService,
     private readonly semanticIngress: SemanticIngressService,
+    private readonly branchScheduler: BranchSchedulerService,
+    private readonly branchStatePlane: BranchStatePlaneService,
+    private readonly pendingActionService: PendingActionService,
     private readonly runtimeGovernancePolicy: RuntimeGovernancePolicyService,
     @Inject(TraceSummaryService)
     private readonly traceSummaryService: TraceSummaryService,
@@ -98,6 +130,74 @@ export class SupervisorAgent {
       routingTelemetry,
       semanticIngressFrame,
     } = plannedExecution;
+    const executionRole = this.resolveExecutionRole({
+      semanticIngressFrame,
+      classification,
+    });
+    const plannerMaxConcurrentBranches =
+      this.resolvePlannerMaxConcurrentBranches(executionRole);
+    const plannerPromotion = resolvePlannerRuntimePathEnabled({
+      env: process.env,
+      companyId,
+    });
+    const plannerRuntimeEnabled = plannerPromotion.enabled;
+    if (
+      plannerRuntimeEnabled &&
+      semanticIngressFrame.subIntentGraph?.branches?.length
+    ) {
+      const graph = semanticIngressFrame.subIntentGraph;
+      const prevSlice =
+        options?.replayMode
+          ? undefined
+          : await this.branchStatePlane.getThreadPlannerSlice(
+              companyId,
+              threadId,
+            );
+      const continueSameGraph =
+        prevSlice &&
+        prevSlice.sourceGraphId === graph.graphId &&
+        !isPlannerSliceFullyTerminal(prevSlice.executionSurface);
+
+      if (continueSameGraph && prevSlice) {
+        const plan = JSON.parse(
+          JSON.stringify(prevSlice.executionPlan),
+        ) as ExecutionPlan;
+        let surface = JSON.parse(
+          JSON.stringify(prevSlice.executionSurface),
+        ) as ExecutionSurfaceState;
+        if (request.executionPlannerMutationApproved) {
+          surface = await this.maybeApplyPlannerMutationResume(
+            request,
+            companyId,
+            surface,
+          );
+        }
+        semanticIngressFrame.executionPlan = plan;
+        semanticIngressFrame.executionSurface = advanceRunnableRootsToRunning(
+          surface,
+          plan,
+          { maxConcurrentRunning: plannerMaxConcurrentBranches },
+        );
+      } else {
+        const executionPlan =
+          this.branchScheduler.buildExecutionPlanFromIngress(
+            semanticIngressFrame,
+          );
+        if (executionPlan) {
+          semanticIngressFrame.executionPlan = executionPlan;
+          semanticIngressFrame.executionSurface =
+            this.branchScheduler.buildInitialSurface(
+              executionPlan,
+              semanticIngressFrame,
+            );
+          semanticIngressFrame.executionSurface = advanceRunnableRootsToRunning(
+            semanticIngressFrame.executionSurface,
+            executionPlan,
+            { maxConcurrentRunning: plannerMaxConcurrentBranches },
+          );
+        }
+      }
+    }
     actorContext.userIntentSource = semanticIngressFrame.operationAuthority;
     actorContext.writePolicy = semanticIngressFrame.writePolicy;
     actorContext.userConfirmed =
@@ -105,11 +205,6 @@ export class SupervisorAgent {
       this.isDirectUserCommand(semanticIngressFrame) &&
       Boolean(userId) &&
       !options?.replayMode;
-    const executionRole = this.resolveExecutionRole({
-      semanticIngressFrame,
-      classification,
-    });
-
     const tExecStart = Date.now();
     const executionRequest: AgentExecutionRequest = {
       role: executionRole,
@@ -153,10 +248,16 @@ export class SupervisorAgent {
       threadId,
     };
     actorContext.agentRole = executionRequest.role;
-    let executionResult = await this.agentRuntime.executeAgent(
-      executionRequest,
+    const plannerBranchTickResult = await this.executePlannerBranchesForTick({
+      request,
       actorContext,
-    );
+      executionRequest,
+      plannerRuntimeEnabled,
+    });
+    const plannerBranchDrivenExecution = Boolean(plannerBranchTickResult);
+    let executionResult =
+      plannerBranchTickResult ??
+      (await this.agentRuntime.executeAgent(executionRequest, actorContext));
     executionResult = this.applyTechMapWorkflowFrame({
       executionResult,
       semanticIngressFrame,
@@ -167,15 +268,55 @@ export class SupervisorAgent {
       executionRequest,
       executionResult,
       compositePlan: semanticIngressFrame.compositePlan ?? null,
+      plannerMaxConcurrentBranches,
+      plannerRuntimeEnabled,
     });
     const tTrustStart = Date.now();
-    executionResult = await this.applyBranchTrustStage({
-      request,
-      actorContext,
-      executionRequest,
-      executionResult,
-    });
+    if (!plannerBranchDrivenExecution) {
+      executionResult = await this.applyBranchTrustStage({
+        request,
+        actorContext,
+        executionRequest,
+        executionResult,
+      });
+    }
     const tTrustEnd = Date.now();
+    if (
+      plannerRuntimeEnabled &&
+      semanticIngressFrame.executionSurface &&
+      !plannerBranchDrivenExecution
+    ) {
+      semanticIngressFrame.executionSurface = finalizeSurfaceFromExecution(
+        semanticIngressFrame.executionSurface,
+        executionResult.executedTools,
+        executionResult.agentExecution?.status ?? null,
+        semanticIngressFrame.executionPlan ?? null,
+      );
+    }
+    if (semanticIngressFrame.executionSurface) {
+      this.branchStatePlane.recordSnapshot(
+        traceId,
+        semanticIngressFrame.executionSurface,
+      );
+    }
+    if (
+      !options?.replayMode &&
+      plannerRuntimeEnabled &&
+      semanticIngressFrame.executionPlan &&
+      semanticIngressFrame.executionSurface &&
+      semanticIngressFrame.subIntentGraph
+    ) {
+      await this.branchStatePlane.recordThreadPlannerSlice(
+        companyId,
+        threadId,
+        {
+          version: "v1",
+          sourceGraphId: semanticIngressFrame.subIntentGraph.graphId,
+          executionPlan: semanticIngressFrame.executionPlan,
+          executionSurface: semanticIngressFrame.executionSurface,
+        },
+      );
+    }
     const branchTrustAssessments =
       executionResult.agentExecution?.branchTrustAssessments ?? [];
     const trustCrossCheckTriggered =
@@ -218,7 +359,9 @@ export class SupervisorAgent {
       traceId,
       threadId,
       companyId,
+      semanticIngressFrame,
     });
+    response.agentRole = response.agentRole ?? executionRequest.role;
 
     const tComposerEnd = Date.now();
     const durationMs = tComposerEnd - startedAt;
@@ -246,6 +389,29 @@ export class SupervisorAgent {
 
       const tSummaryEnd = Date.now();
 
+      const plannerTelemetryOptions = semanticIngressFrame.executionPlan
+        ? {
+            maxConcurrentBranches: plannerMaxConcurrentBranches,
+            plannerPromotion,
+          }
+        : { plannerPromotion };
+      const plannerBranchTelemetrySnapshot =
+        buildBranchPlannerTelemetrySnapshot(
+          semanticIngressFrame,
+          plannerTelemetryOptions,
+        );
+      const controlTowerPlannerEnvelope = buildControlTowerPlannerEnvelopeV1({
+        traceId,
+        companyId,
+        promotion: plannerPromotion,
+        frame: semanticIngressFrame,
+        plannerBranchTelemetry: plannerBranchTelemetrySnapshot,
+      });
+      const controlTowerSubIntentGraphSnapshot =
+        buildControlTowerSubIntentGraphSnapshotV1(
+          semanticIngressFrame.subIntentGraph,
+        );
+
       // Шаг 2: writeAiAuditEntry — await, чтобы гарантировать персистентность записи
       const auditEntryId = await this.supervisorForensics.writeAiAuditEntry({
         companyId,
@@ -258,7 +424,7 @@ export class SupervisorAgent {
           message: request.message,
           workspaceContext: request.workspaceContext,
         },
-        agentRole: executionResult.agentExecution?.role,
+        agentRole: executionResult.agentExecution?.role ?? executionRequest.role,
         fallbackUsed: executionResult.agentExecution?.fallbackUsed,
         validation: executionResult.agentExecution?.validation,
         runtimeGovernance: response.runtimeGovernance,
@@ -280,6 +446,9 @@ export class SupervisorAgent {
             )
           : undefined,
         semanticIngressFrame,
+        plannerBranchTelemetry: plannerBranchTelemetrySnapshot,
+        controlTowerPlannerEnvelope,
+        controlTowerSubIntentGraphSnapshot,
         memoryLane: this.supervisorForensics.buildMemoryLane(
           recallResult,
           response,
@@ -371,6 +540,294 @@ export class SupervisorAgent {
     }
 
     return response;
+  }
+
+  private async executePlannerBranchesForTick(params: {
+    request: RaiChatRequestDto;
+    actorContext: RaiToolActorContext;
+    executionRequest: AgentExecutionRequest;
+    plannerRuntimeEnabled: boolean;
+  }): Promise<Awaited<ReturnType<AgentRuntimeService["executeAgent"]>> | null> {
+    const runnableBranches = this.resolvePlannerRunnableBranchesForTick(
+      params.executionRequest,
+      params.plannerRuntimeEnabled,
+    );
+    if (runnableBranches.length === 0) {
+      return null;
+    }
+
+    const executedTools: Array<{ name: RaiToolName; result: unknown }> = [];
+    const structuredOutputs: Record<string, unknown>[] = [];
+    const branchResults: BranchResultContract[] = [];
+    const branchTrustAssessments: BranchTrustAssessment[] = [];
+    const branchCompositions: UserFacingBranchCompositionPayload[] = [];
+    const delegationChain: NonNullable<
+      NonNullable<
+        Awaited<ReturnType<AgentRuntimeService["executeAgent"]>>["agentExecution"]
+      >["delegationChain"]
+    > = [];
+    const toolCalls: Array<{ name: string; result: unknown }> = [];
+    const connectorCalls: Array<{ name: string; result: unknown }> = [];
+    const evidence: NonNullable<
+      NonNullable<
+        Awaited<ReturnType<AgentRuntimeService["executeAgent"]>>["agentExecution"]
+      >["evidence"]
+    > = [];
+    const suggestedActions: NonNullable<
+      NonNullable<
+        Awaited<ReturnType<AgentRuntimeService["executeAgent"]>>["agentExecution"]
+      >["suggestedActions"]
+    > = [];
+    const statusTrail: Array<
+      NonNullable<
+        Awaited<ReturnType<AgentRuntimeService["executeAgent"]>>["agentExecution"]
+      >["status"]
+    > = [];
+    const summaryTrail: string[] = [];
+    const validationReasons: string[] = [];
+    let validationPassed = true;
+    let fallbackUsed = false;
+    let usage: NonNullable<
+      NonNullable<
+        Awaited<ReturnType<AgentRuntimeService["executeAgent"]>>["agentExecution"]
+      >["usage"]
+    >;
+    let runtimeBudget:
+      | Awaited<ReturnType<AgentRuntimeService["executeAgent"]>>["runtimeBudget"]
+      | undefined;
+    let runtimeGovernance:
+      | Awaited<ReturnType<AgentRuntimeService["executeAgent"]>>["runtimeGovernance"]
+      | undefined;
+    let outputContractVersion = "v1";
+    let executionPath:
+      | NonNullable<
+          Awaited<ReturnType<AgentRuntimeService["executeAgent"]>>["agentExecution"]
+        >["executionPath"]
+      | undefined;
+    let auditPayload: AgentExecutionAuditPayload | undefined;
+    let baseExecution:
+      | NonNullable<
+          Awaited<ReturnType<AgentRuntimeService["executeAgent"]>>["agentExecution"]
+        >
+      | null = null;
+    let latestExecutionForVirtualBranches:
+      | NonNullable<
+          Awaited<ReturnType<AgentRuntimeService["executeAgent"]>>["agentExecution"]
+        >
+      | null = null;
+
+    for (const branch of runnableBranches) {
+      if (!branch.toolName) {
+        const virtualStatus = this.resolveToollessPlannerBranchStatus({
+          branch,
+          latestExecution: latestExecutionForVirtualBranches,
+        });
+        statusTrail.push(virtualStatus);
+        summaryTrail.push(
+          this.buildToollessPlannerBranchSummary(branch, virtualStatus),
+        );
+        this.pulsePlannerSurfaceForExecutedBranch({
+          semanticIngressFrame: params.executionRequest.semanticIngressFrame,
+          branchId: branch.branchId,
+          executedTools: [],
+          agentStatus: virtualStatus,
+          plannerMaxConcurrentBranches: 1,
+          plannerRuntimeEnabled: params.plannerRuntimeEnabled,
+          promoteNextRunnable: false,
+        });
+        continue;
+      }
+
+      const branchRole = branch.ownerRole ?? params.executionRequest.role;
+      const rawBranchResult = await this.agentRuntime.executeAgent(
+        {
+          role: branchRole,
+          message: params.request.message,
+          workspaceContext: params.request.workspaceContext,
+          memoryContext: params.executionRequest.memoryContext,
+          requestedTools: [
+            {
+              name: branch.toolName,
+              payload: branch.payload ?? {},
+            },
+          ],
+          semanticRouting: params.executionRequest.semanticRouting,
+          semanticIngressFrame: params.executionRequest.semanticIngressFrame,
+          traceId: params.executionRequest.traceId,
+          threadId: params.executionRequest.threadId,
+        },
+        {
+          ...params.actorContext,
+          agentRole: branchRole,
+          parentSpanId:
+            params.actorContext.parentSpanId ?? params.executionRequest.traceId,
+        },
+      );
+      const branchResult = this.normalizePlannerBranchExecutionResult(
+        rawBranchResult,
+        branch.toolName,
+      );
+      executedTools.push(...branchResult.executedTools);
+      runtimeBudget = branchResult.runtimeBudget ?? runtimeBudget;
+      runtimeGovernance = branchResult.runtimeGovernance ?? runtimeGovernance;
+
+      const branchExecution =
+        branchResult.agentExecution ??
+        (branchResult.executedTools.some((tool) => {
+          if (!tool.result || typeof tool.result !== "object") {
+            return false;
+          }
+          return (tool.result as { riskPolicyBlocked?: boolean }).riskPolicyBlocked === true;
+        })
+          ? this.buildGovernedPendingActionExecution(
+              branch.toolName,
+              branchResult.executedTools,
+            )
+          : undefined);
+      this.pulsePlannerSurfaceForExecutedBranch({
+        semanticIngressFrame: params.executionRequest.semanticIngressFrame,
+        branchId: branch.branchId,
+        executedTools: branchResult.executedTools,
+        agentStatus: branchExecution?.status ?? "FAILED",
+        plannerMaxConcurrentBranches: 1,
+        plannerRuntimeEnabled: params.plannerRuntimeEnabled,
+        promoteNextRunnable: false,
+      });
+
+      if (!branchExecution) {
+        statusTrail.push("FAILED");
+        summaryTrail.push(
+          `Ветка ${branch.branchId} не вернула agentExecution и помечена как failed.`,
+        );
+        validationPassed = false;
+        validationReasons.push("missing_agent_execution");
+        continue;
+      }
+
+      latestExecutionForVirtualBranches = branchExecution;
+      if (!baseExecution) {
+        baseExecution = branchExecution;
+      }
+      statusTrail.push(branchExecution.status);
+      summaryTrail.push(
+        resolveAgentExecutionSummary({
+          structuredOutput: branchExecution.structuredOutput,
+          structuredOutputs: branchExecution.structuredOutputs,
+          branchCompositions: branchExecution.branchCompositions,
+          branchResults: branchExecution.branchResults,
+          fallback: `Ветка ${branch.branchId} выполнена.`,
+        }),
+      );
+      structuredOutputs.push(branchExecution.structuredOutput);
+      toolCalls.push(...branchExecution.toolCalls);
+      connectorCalls.push(...branchExecution.connectorCalls);
+      evidence.push(...branchExecution.evidence);
+      validationPassed = validationPassed && branchExecution.validation.passed;
+      validationReasons.push(...branchExecution.validation.reasons);
+      fallbackUsed = fallbackUsed || branchExecution.fallbackUsed;
+      usage = this.mergeUsage(usage, branchExecution.usage);
+      outputContractVersion =
+        branchExecution.outputContractVersion ?? outputContractVersion;
+      executionPath = executionPath ?? branchExecution.executionPath;
+      auditPayload = this.mergeAuditPayload(
+        auditPayload,
+        branchExecution.auditPayload,
+      );
+      if (branchExecution.runtimeGovernance) {
+        runtimeGovernance = branchExecution.runtimeGovernance;
+      }
+      if (branchExecution.delegationChain?.length) {
+        delegationChain.push(...branchExecution.delegationChain);
+      }
+      if (branchExecution.suggestedActions?.length) {
+        suggestedActions.push(...branchExecution.suggestedActions);
+      }
+
+      const trust = this.buildTrustAssessment(branchExecution, true);
+      const artifacts = this.buildBranchArtifacts({
+        request: params.request,
+        companyId: params.actorContext.companyId,
+        execution: branchExecution,
+        trust,
+        branchKind: "primary",
+        branchIdOverride: branch.branchId,
+      });
+      branchResults.push(...artifacts.branchResults);
+      branchTrustAssessments.push(...artifacts.branchTrustAssessments);
+      branchCompositions.push(...artifacts.branchCompositions);
+    }
+
+    const aggregateStatus =
+      this.resolvePlannerBranchAggregateStatus(statusTrail);
+    const aggregateConfidence =
+      branchTrustAssessments.length > 0
+        ? Number(
+            (
+              branchTrustAssessments.reduce(
+                (sum, assessment) => sum + assessment.score,
+                0,
+              ) / branchTrustAssessments.length
+            ).toFixed(2),
+          )
+        : 0.5;
+
+    return {
+      executedTools,
+      runtimeBudget,
+      runtimeGovernance,
+      agentExecution: {
+        role: baseExecution?.role ?? params.executionRequest.role,
+        status: aggregateStatus,
+        executionPath:
+          executionPath ??
+          baseExecution?.executionPath ??
+          "explicit_tool_path",
+        structuredOutput: {
+          ...(baseExecution?.structuredOutput ?? {}),
+          summary: this.buildPlannerBranchTickSummary(
+            runnableBranches,
+            summaryTrail,
+          ),
+          resultType: "planner_branch_tick",
+          plannerBranchDriven: true,
+          plannerExecutedBranchIds: runnableBranches.map(
+            (branch) => branch.branchId,
+          ),
+          plannerExecutedToolNames: executedTools.map((tool) => tool.name),
+          plannerExecutionCount: runnableBranches.length,
+          confidence: aggregateConfidence,
+        },
+        structuredOutputs:
+          structuredOutputs.length > 0 ? structuredOutputs : undefined,
+        branchResults: branchResults.length > 0 ? branchResults : undefined,
+        branchTrustAssessments:
+          branchTrustAssessments.length > 0
+            ? branchTrustAssessments
+            : undefined,
+        branchCompositions:
+          branchCompositions.length > 0 ? branchCompositions : undefined,
+        delegationChain:
+          delegationChain.length > 0 ? delegationChain : undefined,
+        usage,
+        toolCalls,
+        connectorCalls,
+        evidence,
+        validation: {
+          passed: validationPassed,
+          reasons: this.uniqueStrings(validationReasons),
+        },
+        runtimeBudget,
+        runtimeGovernance,
+        fallbackUsed,
+        outputContractVersion:
+          baseExecution?.outputContractVersion ?? outputContractVersion,
+        auditPayload:
+          auditPayload ??
+          this.buildPlannerAggregateAuditPayload(executedTools),
+        suggestedActions:
+          suggestedActions.length > 0 ? suggestedActions : undefined,
+      },
+    };
   }
 
   private async applyBranchTrustStage(params: {
@@ -524,12 +981,51 @@ export class SupervisorAgent {
     return executionResult;
   }
 
+  /**
+   * После выполнения конкретной composite-ветки продвигает только её строку в planner surface,
+   * а затем открывает следующие runnable корни.
+   */
+  private pulsePlannerSurfaceForExecutedBranch(params: {
+    semanticIngressFrame: SemanticIngressFrame;
+    branchId: string;
+    executedTools: Array<{ name: RaiToolName; result: unknown }>;
+    agentStatus: string | null | undefined;
+    plannerMaxConcurrentBranches: number;
+    plannerRuntimeEnabled: boolean;
+    promoteNextRunnable?: boolean;
+  }): void {
+    if (!params.plannerRuntimeEnabled) {
+      return;
+    }
+    const frame = params.semanticIngressFrame;
+    if (!frame.executionSurface || !frame.executionPlan) {
+      return;
+    }
+    frame.executionSurface = finalizeNamedBranchFromExecution(
+      frame.executionSurface,
+      params.branchId,
+      params.executedTools,
+      params.agentStatus,
+      frame.executionPlan,
+    );
+    if (params.promoteNextRunnable === false) {
+      return;
+    }
+    frame.executionSurface = advanceRunnableRootsToRunning(
+      frame.executionSurface,
+      frame.executionPlan,
+      { maxConcurrentRunning: params.plannerMaxConcurrentBranches },
+    );
+  }
+
   private async applyCompositeWorkflowStage(params: {
     request: RaiChatRequestDto;
     actorContext: RaiToolActorContext;
     executionRequest: AgentExecutionRequest;
     executionResult: Awaited<ReturnType<AgentRuntimeService["executeAgent"]>>;
     compositePlan: CompositeWorkflowPlan | null;
+    plannerMaxConcurrentBranches: number;
+    plannerRuntimeEnabled: boolean;
   }): Promise<Awaited<ReturnType<AgentRuntimeService["executeAgent"]>>> {
     const { request, actorContext, executionRequest, compositePlan } = params;
     const primaryExecution = params.executionResult.agentExecution;
@@ -543,10 +1039,6 @@ export class SupervisorAgent {
       return params.executionResult;
     }
 
-    if (compositePlan.workflowId.startsWith("agro.execution_fact")) {
-      return this.applyAnalyticalAggregationCompositeStage(params);
-    }
-
     type CompositeStageSnapshot = {
       stageId: string;
       order: number;
@@ -557,119 +1049,89 @@ export class SupervisorAgent {
       summary: string;
     };
 
-    const stageSnapshots: CompositeStageSnapshot[] = [
-      {
-        stageId: compositePlan.stages[0].stageId,
-        order: compositePlan.stages[0].order,
-        agentRole: primaryExecution.role,
-        intent: String(
-          primaryExecution.structuredOutput?.intent ?? "register_counterparty",
-        ),
-        toolName: RaiToolName.RegisterCounterparty,
-        status: "completed",
-        summary: primaryExecution.text,
-      },
-    ];
-
-    const registerData = this.pickRecord(
-      primaryExecution.structuredOutput ?? {},
-      "data",
-    ) as Record<string, unknown> | undefined;
-    const createStage = compositePlan.stages[1];
-    const createResult = await this.agentRuntime.executeAgent(
-      {
-        role: primaryExecution.role,
-        message: `${request.message}\nComposite stage: ${createStage.label}.`,
-        workspaceContext: request.workspaceContext,
-        memoryContext: executionRequest.memoryContext,
-        requestedTools: [
-          {
-            name: RaiToolName.CreateCrmAccount,
-            payload: {
-              name: this.resolveCompositeAccountName(registerData),
-              inn:
-                typeof registerData?.inn === "string"
-                  ? registerData.inn
-                  : undefined,
-              partyId:
-                typeof registerData?.partyId === "string"
-                  ? registerData.partyId
-                  : undefined,
-            },
-          },
-        ],
-        semanticRouting: executionRequest.semanticRouting,
-        semanticIngressFrame: executionRequest.semanticIngressFrame,
-        traceId: executionRequest.traceId,
-        threadId: executionRequest.threadId,
-      },
-      actorContext,
+    const initialStage = this.resolveInitialCompositeStage(
+      compositePlan,
+      executionRequest,
+      primaryExecution.role,
     );
-    const createExecution = createResult.agentExecution;
-    if (!createExecution) {
-      stageSnapshots.push({
-        stageId: createStage.stageId,
-        order: createStage.order,
-        agentRole: primaryExecution.role,
-        intent: createStage.intent,
-        toolName: createStage.toolName,
-        status: "failed",
-        summary: "Composite stage did not return an execution result.",
-      });
-      stageSnapshots.push({
-        stageId: compositePlan.stages[2].stageId,
-        order: compositePlan.stages[2].order,
-        agentRole: primaryExecution.role,
-        intent: compositePlan.stages[2].intent,
-        toolName: RaiToolName.GetCrmAccountWorkspace,
-        status: "blocked",
-        summary:
-          "CRM-аккаунт не был создан, поэтому открытие workspace остановлено.",
-      });
-      return this.finalizeCompositeExecution({
-        compositePlan,
-        executionResult: params.executionResult,
-        stageSnapshots,
-        createResult,
-        reviewResult: null,
-      });
-    }
+    const stageSnapshots = new Map<string, CompositeStageSnapshot>();
+    const stageArtifacts = new Map<string, CompositeStagePayloadArtifact>();
+    const followUpResults: Array<
+      Awaited<ReturnType<AgentRuntimeService["executeAgent"]>>
+    > = [];
+    const attemptedStageIds = new Set<string>();
+    const cumulativeExecutedTools = [...params.executionResult.executedTools];
 
-    stageSnapshots.push({
-      stageId: createStage.stageId,
-      order: createStage.order,
-      agentRole: createExecution.role,
-      intent: String(createExecution.structuredOutput?.intent ?? createStage.intent),
-      toolName: RaiToolName.CreateCrmAccount,
-      status: createExecution.status === "COMPLETED" ? "completed" : "failed",
-      summary: createExecution.text,
+    stageSnapshots.set(
+      initialStage.stageId,
+      this.buildCompositeStageSnapshot({
+        stage: initialStage,
+        execution: primaryExecution,
+      }),
+    );
+    stageArtifacts.set(
+      initialStage.stageId,
+      this.buildCompositeStageArtifact(primaryExecution),
+    );
+    attemptedStageIds.add(initialStage.stageId);
+
+    this.pulsePlannerSurfaceForExecutedBranch({
+      semanticIngressFrame: executionRequest.semanticIngressFrame,
+      branchId: initialStage.stageId,
+      executedTools: params.executionResult.executedTools,
+      agentStatus: primaryExecution.status,
+      plannerMaxConcurrentBranches: params.plannerMaxConcurrentBranches,
+      plannerRuntimeEnabled: params.plannerRuntimeEnabled,
     });
 
-    const createData = this.pickRecord(
-      createExecution.structuredOutput ?? {},
-      "data",
-    ) as Record<string, unknown> | undefined;
-    const createAccountId =
-      typeof createData?.accountId === "string" ? createData.accountId : undefined;
-    let reviewResult:
-      | Awaited<ReturnType<AgentRuntimeService["executeAgent"]>>
-      | null = null;
+    while (true) {
+      const nextStage = this.pickNextCompositeStage({
+        compositePlan,
+        semanticIngressFrame: executionRequest.semanticIngressFrame,
+        attemptedStageIds,
+        stageSnapshots,
+        plannerRuntimeEnabled: params.plannerRuntimeEnabled,
+      });
+      if (!nextStage) {
+        break;
+      }
+      attemptedStageIds.add(nextStage.stageId);
 
-    if (createExecution.status === "COMPLETED" && createAccountId) {
-      const reviewStage = compositePlan.stages[2];
-      reviewResult = await this.agentRuntime.executeAgent(
+      const payloadResolution = resolveCompositeStagePayload({
+        stage: nextStage,
+        artifactsByStageId: stageArtifacts,
+      });
+      if (!payloadResolution.ok) {
+        stageSnapshots.set(nextStage.stageId, {
+          stageId: nextStage.stageId,
+          order: nextStage.order,
+          agentRole: nextStage.agentRole,
+          intent: nextStage.intent,
+          toolName: nextStage.toolName,
+          status: "failed",
+          summary: `Composite stage payload не разрешён: ${payloadResolution.missingRequiredBindings.join(", ")}.`,
+        });
+        this.pulsePlannerSurfaceForExecutedBranch({
+          semanticIngressFrame: executionRequest.semanticIngressFrame,
+          branchId: nextStage.stageId,
+          executedTools: cumulativeExecutedTools,
+          agentStatus: "FAILED",
+          plannerMaxConcurrentBranches: params.plannerMaxConcurrentBranches,
+          plannerRuntimeEnabled: params.plannerRuntimeEnabled,
+        });
+        continue;
+      }
+
+      const stageResult = await this.agentRuntime.executeAgent(
         {
-          role: primaryExecution.role,
-          message: `${request.message}\nComposite stage: ${reviewStage.label}.`,
+          role: nextStage.agentRole,
+          message: `${request.message}\nComposite stage: ${nextStage.label}.`,
           workspaceContext: request.workspaceContext,
           memoryContext: executionRequest.memoryContext,
           requestedTools: [
             {
-              name: RaiToolName.GetCrmAccountWorkspace,
-              payload: {
-                accountId: createAccountId,
-                query: this.resolveCompositeAccountName(registerData),
-              },
+              name: nextStage.toolName,
+              payload: payloadResolution.payload,
             },
           ],
           semanticRouting: executionRequest.semanticRouting,
@@ -677,52 +1139,245 @@ export class SupervisorAgent {
           traceId: executionRequest.traceId,
           threadId: executionRequest.threadId,
         },
-        actorContext,
+        {
+          ...actorContext,
+          agentRole: nextStage.agentRole,
+          parentSpanId: actorContext.parentSpanId ?? executionRequest.traceId,
+        },
       );
-      const reviewExecution = reviewResult.agentExecution;
-      if (reviewExecution) {
-        stageSnapshots.push({
-          stageId: reviewStage.stageId,
-          order: reviewStage.order,
-          agentRole: reviewExecution.role,
-          intent: String(
-            reviewExecution.structuredOutput?.intent ?? reviewStage.intent,
-          ),
-          toolName: RaiToolName.GetCrmAccountWorkspace,
-          status: reviewExecution.status === "COMPLETED" ? "completed" : "failed",
-          summary: reviewExecution.text,
-        });
-      } else {
-        stageSnapshots.push({
-          stageId: reviewStage.stageId,
-          order: reviewStage.order,
-          agentRole: primaryExecution.role,
-          intent: reviewStage.intent,
-          toolName: RaiToolName.GetCrmAccountWorkspace,
-          status: "failed",
-          summary: "Composite stage did not return an execution result.",
-        });
-      }
-    } else {
-      stageSnapshots.push({
-        stageId: compositePlan.stages[2].stageId,
-        order: compositePlan.stages[2].order,
-        agentRole: primaryExecution.role,
-        intent: compositePlan.stages[2].intent,
-        toolName: RaiToolName.GetCrmAccountWorkspace,
-        status: "blocked",
-        summary:
-          "CRM-аккаунт не был создан, поэтому открытие workspace остановлено.",
+      followUpResults.push(stageResult);
+      cumulativeExecutedTools.push(...stageResult.executedTools);
+
+      const stageExecution = stageResult.agentExecution;
+      stageSnapshots.set(
+        nextStage.stageId,
+        this.buildCompositeStageSnapshot({
+          stage: nextStage,
+          execution: stageExecution ?? null,
+        }),
+      );
+      this.pulsePlannerSurfaceForExecutedBranch({
+        semanticIngressFrame: executionRequest.semanticIngressFrame,
+        branchId: nextStage.stageId,
+        executedTools: cumulativeExecutedTools,
+        agentStatus: stageExecution?.status ?? "FAILED",
+        plannerMaxConcurrentBranches: params.plannerMaxConcurrentBranches,
+        plannerRuntimeEnabled: params.plannerRuntimeEnabled,
       });
+
+      if (stageExecution?.status === "COMPLETED") {
+        stageArtifacts.set(
+          nextStage.stageId,
+          this.buildCompositeStageArtifact(stageExecution),
+        );
+      }
     }
 
     return this.finalizeCompositeExecution({
       compositePlan,
       executionResult: params.executionResult,
-      stageSnapshots,
-      createResult,
-      reviewResult,
+      stageSnapshots: this.completeCompositeStageSnapshots(
+        compositePlan,
+        stageSnapshots,
+      ),
+      followUpResults,
     });
+  }
+
+  private resolveInitialCompositeStage(
+    compositePlan: CompositeWorkflowPlan,
+    executionRequest: AgentExecutionRequest,
+    executionRole: string,
+  ): CompositeWorkflowStageContract {
+    const requestedToolName = executionRequest.requestedTools?.[0]?.name ?? null;
+    return (
+      compositePlan.stages.find(
+        (stage) =>
+          stage.agentRole === executionRole &&
+          stage.toolName === requestedToolName,
+      ) ?? compositePlan.stages[0]
+    );
+  }
+
+  private buildCompositeStageSnapshot(params: {
+    stage: CompositeWorkflowStageContract;
+      execution:
+        | {
+          role: string;
+          status: "COMPLETED" | "FAILED" | "NEEDS_MORE_DATA" | "RATE_LIMITED";
+          structuredOutput?: Record<string, unknown>;
+        }
+      | null;
+  }): {
+    stageId: string;
+    order: number;
+    agentRole: string;
+    intent: string;
+    toolName: RaiToolName;
+    status: CompositeWorkflowStageStatus;
+    summary: string;
+  } {
+    const { stage, execution } = params;
+    if (!execution) {
+      return {
+        stageId: stage.stageId,
+        order: stage.order,
+        agentRole: stage.agentRole,
+        intent: stage.intent,
+        toolName: stage.toolName,
+        status: "failed",
+        summary: "Composite stage did not return an execution result.",
+      };
+    }
+    return {
+      stageId: stage.stageId,
+      order: stage.order,
+      agentRole: execution.role,
+      intent: String(execution.structuredOutput?.intent ?? stage.intent),
+      toolName: stage.toolName,
+      status: execution.status === "COMPLETED" ? "completed" : "failed",
+      summary: resolveAgentExecutionSummary({
+        structuredOutput: execution.structuredOutput,
+        fallback: `Stage ${stage.stageId} completed.`,
+      }),
+    };
+  }
+
+  private buildCompositeStageArtifact(
+    execution: {
+      structuredOutput?: Record<string, unknown>;
+    },
+  ): CompositeStagePayloadArtifact {
+    return {
+      structuredOutput:
+        execution.structuredOutput &&
+        typeof execution.structuredOutput === "object"
+          ? JSON.parse(
+              JSON.stringify(execution.structuredOutput),
+            ) as Record<string, unknown>
+          : undefined,
+    };
+  }
+
+  private pickNextCompositeStage(params: {
+    compositePlan: CompositeWorkflowPlan;
+    semanticIngressFrame: SemanticIngressFrame;
+    attemptedStageIds: Set<string>;
+    stageSnapshots: Map<
+      string,
+      {
+        stageId: string;
+        order: number;
+        agentRole: string;
+        intent: string;
+        toolName: RaiToolName;
+        status: CompositeWorkflowStageStatus;
+        summary: string;
+      }
+    >;
+    plannerRuntimeEnabled: boolean;
+  }): CompositeWorkflowStageContract | null {
+    const orderedStages = [...params.compositePlan.stages].sort(
+      (left, right) => left.order - right.order,
+    );
+    if (
+      params.plannerRuntimeEnabled &&
+      params.semanticIngressFrame.executionSurface
+    ) {
+      const runningIds = new Set(
+        params.semanticIngressFrame.executionSurface.branches
+          .filter((branch) => branch.lifecycle === "RUNNING")
+          .map((branch) => branch.branchId),
+      );
+      return (
+        orderedStages.find(
+          (stage) =>
+            !params.attemptedStageIds.has(stage.stageId) &&
+            runningIds.has(stage.stageId),
+        ) ?? null
+      );
+    }
+
+    const completedStageIds = new Set(
+      [...params.stageSnapshots.values()]
+        .filter((snapshot) => snapshot.status === "completed")
+        .map((snapshot) => snapshot.stageId),
+    );
+    return (
+      orderedStages.find(
+        (stage) =>
+          !params.attemptedStageIds.has(stage.stageId) &&
+          stage.dependsOn.every((depId) => completedStageIds.has(depId)),
+      ) ?? null
+    );
+  }
+
+  private completeCompositeStageSnapshots(
+    compositePlan: CompositeWorkflowPlan,
+    stageSnapshots: Map<
+      string,
+      {
+        stageId: string;
+        order: number;
+        agentRole: string;
+        intent: string;
+        toolName: RaiToolName;
+        status: CompositeWorkflowStageStatus;
+        summary: string;
+      }
+    >,
+  ): Array<{
+    stageId: string;
+    order: number;
+    agentRole: string;
+    intent: string;
+    toolName: RaiToolName;
+    status: CompositeWorkflowStageStatus;
+    summary: string;
+  }> {
+    const orderedStages = [...compositePlan.stages].sort(
+      (left, right) => left.order - right.order,
+    );
+    const out: Array<{
+      stageId: string;
+      order: number;
+      agentRole: string;
+      intent: string;
+      toolName: RaiToolName;
+      status: CompositeWorkflowStageStatus;
+      summary: string;
+    }> = [];
+
+    for (const stage of orderedStages) {
+      const existing = stageSnapshots.get(stage.stageId);
+      if (existing) {
+        out.push(existing);
+        continue;
+      }
+
+      const depStatuses = stage.dependsOn.map((depId) => {
+        const dep = stageSnapshots.get(depId);
+        return dep?.status ?? "planned";
+      });
+      const blocked =
+        depStatuses.includes("failed") || depStatuses.includes("blocked");
+      const waiting = depStatuses.some((status) => status !== "completed");
+      out.push({
+        stageId: stage.stageId,
+        order: stage.order,
+        agentRole: stage.agentRole,
+        intent: stage.intent,
+        toolName: stage.toolName,
+        status: blocked ? "blocked" : "planned",
+        summary: blocked
+          ? `Стадия остановлена из-за незавершённых зависимостей: ${stage.dependsOn.join(", ")}.`
+          : waiting
+            ? `Стадия ожидает завершения зависимостей: ${stage.dependsOn.join(", ")}.`
+            : "Стадия не была запущена в текущем цикле.",
+      });
+    }
+
+    return out;
   }
 
   private finalizeCompositeExecution(params: {
@@ -737,37 +1392,38 @@ export class SupervisorAgent {
       status: CompositeWorkflowStageStatus;
       summary: string;
     }>;
-    createResult: Awaited<ReturnType<AgentRuntimeService["executeAgent"]>>;
-    reviewResult: Awaited<ReturnType<AgentRuntimeService["executeAgent"]>> | null;
+    followUpResults: Array<Awaited<ReturnType<AgentRuntimeService["executeAgent"]>>>;
   }): Awaited<ReturnType<AgentRuntimeService["executeAgent"]>> {
-    const { compositePlan, executionResult, stageSnapshots, createResult, reviewResult } = params;
-    const createExecution = createResult.agentExecution;
-    const reviewExecution = reviewResult?.agentExecution ?? null;
+    const { compositePlan, executionResult, stageSnapshots, followUpResults } = params;
+    const followUpExecutions = followUpResults
+      .map((result) => result.agentExecution)
+      .filter(
+        (
+          execution,
+        ): execution is NonNullable<
+          Awaited<ReturnType<AgentRuntimeService["executeAgent"]>>["agentExecution"]
+        > => Boolean(execution),
+      );
     const structuredOutputs = [
       ...(executionResult.agentExecution?.structuredOutputs ?? []),
-      createExecution?.structuredOutput,
-      reviewExecution?.structuredOutput,
+      ...followUpExecutions.map((execution) => execution.structuredOutput),
     ].filter((item): item is Record<string, unknown> => Boolean(item));
     const delegationChain = [
       ...(executionResult.agentExecution?.delegationChain ?? []),
-      ...(createExecution?.delegationChain ?? []),
-      ...(reviewExecution?.delegationChain ?? []),
+      ...followUpExecutions.flatMap((execution) => execution.delegationChain ?? []),
     ];
     const evidence = [
       ...(executionResult.agentExecution?.evidence ?? []),
-      ...(createExecution?.evidence ?? []),
-      ...(reviewExecution?.evidence ?? []),
+      ...followUpExecutions.flatMap((execution) => execution.evidence ?? []),
     ];
     const toolCalls = [
       ...(executionResult.agentExecution?.toolCalls ?? []),
-      ...(createExecution?.toolCalls ?? []),
-      ...(reviewExecution?.toolCalls ?? []),
+      ...followUpExecutions.flatMap((execution) => execution.toolCalls ?? []),
     ];
 
     executionResult.executedTools = [
       ...executionResult.executedTools,
-      ...createResult.executedTools,
-      ...(reviewResult?.executedTools ?? []),
+      ...followUpResults.flatMap((result) => result.executedTools),
     ];
 
     const completedStages = stageSnapshots.every(
@@ -776,7 +1432,6 @@ export class SupervisorAgent {
     executionResult.agentExecution = {
       ...executionResult.agentExecution,
       status: completedStages ? "COMPLETED" : "NEEDS_MORE_DATA",
-      text: this.buildCompositeExecutionText(compositePlan, stageSnapshots),
       evidence,
       toolCalls,
       structuredOutputs,
@@ -784,6 +1439,11 @@ export class SupervisorAgent {
         delegationChain.length > 0 ? delegationChain : undefined,
       structuredOutput: {
         ...executionResult.agentExecution.structuredOutput,
+        summary: this.buildCompositeExecutionSummary(
+          compositePlan,
+          stageSnapshots,
+        ),
+        resultType: "composite_workflow",
         compositePlan: this.markCompositePlanProgress(compositePlan, stageSnapshots),
         compositeStages: stageSnapshots,
         compositeWorkflowId: compositePlan.workflowId,
@@ -819,7 +1479,7 @@ export class SupervisorAgent {
     };
   }
 
-  private buildCompositeExecutionText(
+  private buildCompositeExecutionSummary(
     compositePlan: CompositeWorkflowPlan,
     stageSnapshots: Array<{
       stageId: string;
@@ -860,179 +1520,6 @@ export class SupervisorAgent {
       ? ` Итог по стадиям: ${completedStages.join(" ")}`
       : "";
     return `${prefix}${failedSuffix}${stageSummary}`.trim();
-  }
-
-  private resolveCompositeAccountName(
-    registerData?: Record<string, unknown> | null,
-  ): string {
-    const legalName =
-      typeof registerData?.legalName === "string"
-        ? registerData.legalName.trim()
-        : "";
-    if (legalName) {
-      return legalName;
-    }
-    const shortName =
-      typeof registerData?.shortName === "string"
-        ? registerData.shortName.trim()
-        : "";
-    if (shortName) {
-      return shortName;
-    }
-    const partyId =
-      typeof registerData?.partyId === "string"
-        ? registerData.partyId.trim()
-        : "";
-    return partyId || "контрагент";
-  }
-
-  private async applyAnalyticalAggregationCompositeStage(params: {
-    request: RaiChatRequestDto;
-    actorContext: RaiToolActorContext;
-    executionRequest: AgentExecutionRequest;
-    executionResult: Awaited<ReturnType<AgentRuntimeService["executeAgent"]>>;
-    compositePlan: CompositeWorkflowPlan | null;
-  }): Promise<Awaited<ReturnType<AgentRuntimeService["executeAgent"]>>> {
-    const { request, actorContext, executionRequest, compositePlan } = params;
-    const primaryExecution = params.executionResult.agentExecution;
-    if (
-      !compositePlan ||
-      !primaryExecution ||
-      primaryExecution.status !== "COMPLETED" ||
-      primaryExecution.role !== compositePlan.leadOwnerAgent ||
-      compositePlan.stages.length < 2
-    ) {
-      return params.executionResult;
-    }
-
-    type CompositeStageSnapshot = {
-      stageId: string;
-      order: number;
-      agentRole: string;
-      intent: string;
-      toolName: RaiToolName;
-      status: CompositeWorkflowStageStatus;
-      summary: string;
-    };
-
-    const stageSnapshots: CompositeStageSnapshot[] = [
-      {
-        stageId: compositePlan.stages[0].stageId,
-        order: compositePlan.stages[0].order,
-        agentRole: primaryExecution.role,
-        intent: String(
-          primaryExecution.structuredOutput?.intent ??
-            compositePlan.stages[0].intent,
-        ),
-        toolName: compositePlan.stages[0].toolName,
-        status: primaryExecution.status === "COMPLETED" ? "completed" : "failed",
-        summary: primaryExecution.text,
-      },
-    ];
-
-    const analyticScope = this.resolveAnalyticalCompositeScope(request);
-    const financeStage = compositePlan.stages[1];
-    const financeResult = await this.agentRuntime.executeAgent(
-      {
-        role: financeStage.agentRole,
-        message: `${request.message}\nComposite stage: ${financeStage.label}.`,
-        workspaceContext: request.workspaceContext,
-        memoryContext: executionRequest.memoryContext,
-        requestedTools: [
-          {
-            name: financeStage.toolName,
-            payload:
-              financeStage.toolName === RaiToolName.ComputePlanFact
-                ? {
-                    scope: {
-                      planId: analyticScope.planId,
-                      seasonId: analyticScope.seasonId,
-                    },
-                  }
-                : {
-                    scope: {
-                      seasonId: analyticScope.seasonId,
-                      fieldId: analyticScope.fieldId,
-                    },
-                  },
-          },
-        ],
-        semanticRouting: executionRequest.semanticRouting,
-        semanticIngressFrame: executionRequest.semanticIngressFrame,
-        traceId: executionRequest.traceId,
-        threadId: executionRequest.threadId,
-      },
-      actorContext,
-    );
-    const financeExecution = financeResult.agentExecution;
-    if (financeExecution) {
-      stageSnapshots.push({
-        stageId: financeStage.stageId,
-        order: financeStage.order,
-        agentRole: financeExecution.role,
-        intent: String(
-          financeExecution.structuredOutput?.intent ?? financeStage.intent,
-        ),
-        toolName: financeStage.toolName,
-        status: financeExecution.status === "COMPLETED" ? "completed" : "failed",
-        summary: financeExecution.text,
-      });
-    } else {
-      stageSnapshots.push({
-        stageId: financeStage.stageId,
-        order: financeStage.order,
-        agentRole: financeStage.agentRole,
-        intent: financeStage.intent,
-        toolName: financeStage.toolName,
-        status: "failed",
-        summary: "Финансовый branch не вернул execution result.",
-      });
-    }
-
-    return this.finalizeCompositeExecution({
-      compositePlan,
-      executionResult: params.executionResult,
-      stageSnapshots,
-      createResult: financeResult,
-      reviewResult: null,
-    });
-  }
-
-  private resolveAnalyticalCompositeScope(request: RaiChatRequestDto): {
-    planId?: string;
-    seasonId?: string;
-    fieldId?: string;
-  } {
-    const selected = request.workspaceContext?.selectedRowSummary;
-    const refs = request.workspaceContext?.activeEntityRefs ?? [];
-    const seasonId = this.readWorkspaceFilterAsString(
-      request.workspaceContext?.filters?.seasonId,
-    );
-    const planId = this.readWorkspaceFilterAsString(
-      request.workspaceContext?.filters?.planId,
-    );
-    const fieldId =
-      this.readWorkspaceFilterAsString(request.workspaceContext?.filters?.fieldId) ??
-      refs.find((item) => item.kind === "field")?.id ??
-      (selected?.kind?.toLowerCase() === "field" ? selected.id : undefined);
-    return {
-      planId:
-        planId ?? (selected?.kind?.toLowerCase() === "plan" ? selected.id : undefined),
-      seasonId,
-      fieldId,
-    };
-  }
-
-  private readWorkspaceFilterAsString(
-    value: string | number | boolean | null | undefined,
-  ): string | undefined {
-    if (typeof value === "string" && value.trim().length > 0) {
-      return value.trim();
-    }
-    if (typeof value === "number") {
-      return String(value);
-    }
-    return undefined;
   }
 
   private buildTrustAssessment(execution: {
@@ -1151,7 +1638,6 @@ export class SupervisorAgent {
     execution: {
       role: string;
       status: "COMPLETED" | "FAILED" | "NEEDS_MORE_DATA" | "RATE_LIMITED";
-      text: string;
       structuredOutput?: Record<string, unknown>;
       toolCalls: Array<{ name: string; result: unknown }>;
       evidence: Array<{
@@ -1168,18 +1654,23 @@ export class SupervisorAgent {
       requiresCrossCheck: boolean;
     };
     branchKind: "primary" | "cross_check";
+    branchIdOverride?: string;
   }): {
     branchResults: BranchResultContract[];
     branchTrustAssessments: BranchTrustAssessment[];
     branchCompositions: UserFacingBranchCompositionPayload[];
   } {
-    const branchId = `${params.execution.role}:${params.branchKind}`;
+    const branchId =
+      params.branchIdOverride ?? `${params.execution.role}:${params.branchKind}`;
     const structuredOutput = params.execution.structuredOutput ?? {};
     const branchResult: BranchResultContract = {
       branch_id: branchId,
       source_agent: params.execution.role,
       domain: params.execution.role,
-      summary: params.execution.text,
+      summary: resolveAgentExecutionSummary({
+        structuredOutput: params.execution.structuredOutput,
+        fallback: `Ветка ${branchId} выполнена.`,
+      }),
       scope: this.resolveBranchScope(
         params.request,
         params.companyId,
@@ -1262,7 +1753,10 @@ export class SupervisorAgent {
       branch_id: branchId,
       verdict: params.trust.verdict,
       include_in_response: params.trust.verdict !== "REJECTED",
-      summary: params.execution.text,
+      summary: resolveAgentExecutionSummary({
+        structuredOutput: params.execution.structuredOutput,
+        fallback: `Ветка ${branchId} выполнена.`,
+      }),
       disclosure: this.uniqueStrings([
         ...params.trust.reasons,
         ...branchResult.data_gaps,
@@ -1451,6 +1945,274 @@ export class SupervisorAgent {
     return [...new Set(values.filter((value) => value.trim().length > 0))];
   }
 
+  private resolvePlannerRunnableBranchesForTick(
+    executionRequest: AgentExecutionRequest,
+    plannerRuntimeEnabled: boolean,
+  ): ExecutionPlanBranch[] {
+    if (!plannerRuntimeEnabled) {
+      return [];
+    }
+    const frame = executionRequest.semanticIngressFrame;
+    if (
+      !frame?.executionPlan ||
+      !frame.executionSurface ||
+      frame.compositePlan ||
+      frame.executionPlan.branches.length < 2
+    ) {
+      return [];
+    }
+
+    const runningIds = new Set(
+      frame.executionSurface.branches
+        .filter((branch) => branch.lifecycle === "RUNNING")
+        .map((branch) => branch.branchId),
+    );
+    if (runningIds.size === 0) {
+      return [];
+    }
+
+    const branches = frame.executionPlan.branches
+      .filter((branch) => runningIds.has(branch.branchId))
+      .sort((left, right) => left.order - right.order);
+    return branches as ExecutionPlanBranch[];
+  }
+
+  private normalizePlannerBranchExecutionResult(
+    result: Awaited<ReturnType<AgentRuntimeService["executeAgent"]>>,
+    toolName: RaiToolName,
+  ): Awaited<ReturnType<AgentRuntimeService["executeAgent"]>> {
+    const executedTools = result.executedTools.filter(
+      (tool) => tool.name === toolName,
+    );
+    const blockedTool = executedTools.find((tool) => {
+      if (!tool.result || typeof tool.result !== "object") {
+        return false;
+      }
+      return (tool.result as { riskPolicyBlocked?: boolean }).riskPolicyBlocked === true;
+    });
+    return {
+      ...result,
+      executedTools,
+      agentExecution: result.agentExecution
+        ? {
+            ...result.agentExecution,
+            toolCalls: result.agentExecution.toolCalls.filter(
+              (call) => call.name === toolName,
+            ),
+          }
+        : blockedTool
+          ? this.buildGovernedPendingActionExecution(toolName, executedTools)
+          : undefined,
+    };
+  }
+
+  private buildGovernedPendingActionExecution(
+    toolName: RaiToolName,
+    executedTools: Array<{ name: RaiToolName; result: unknown }>,
+  ): NonNullable<
+    Awaited<ReturnType<AgentRuntimeService["executeAgent"]>>["agentExecution"]
+  > {
+    const blockedTool = executedTools.find((tool) => {
+      if (!tool.result || typeof tool.result !== "object") {
+        return false;
+      }
+      return (tool.result as { riskPolicyBlocked?: boolean }).riskPolicyBlocked === true;
+    });
+    return {
+      role: "governed_tool_path",
+      status: "NEEDS_MORE_DATA",
+      executionPath: "explicit_tool_path",
+      structuredOutput: {
+        summary: `Действие "${toolName}" ожидает подтверждения.`,
+        resultType: "governed_pending_action",
+        pendingActionId:
+          blockedTool &&
+          typeof (blockedTool.result as { actionId?: unknown }).actionId === "string"
+            ? (blockedTool.result as { actionId: string }).actionId
+            : undefined,
+        riskPolicyBlocked: true,
+      },
+      toolCalls: executedTools,
+      connectorCalls: [],
+      evidence: [],
+      validation: {
+        passed: true,
+        reasons: ["governed_pending_action"],
+      },
+      fallbackUsed: false,
+      outputContractVersion: "v1",
+      auditPayload: this.buildPlannerAggregateAuditPayload(executedTools),
+    };
+  }
+
+  private resolvePlannerBranchAggregateStatus(
+    statuses: Array<
+      NonNullable<
+        Awaited<ReturnType<AgentRuntimeService["executeAgent"]>>["agentExecution"]
+      >["status"]
+    >,
+  ): "COMPLETED" | "FAILED" | "NEEDS_MORE_DATA" | "RATE_LIMITED" {
+    if (statuses.length === 0) {
+      return "FAILED";
+    }
+    if (statuses.every((status) => status === "COMPLETED")) {
+      return "COMPLETED";
+    }
+    if (statuses.some((status) => status === "NEEDS_MORE_DATA")) {
+      return "NEEDS_MORE_DATA";
+    }
+    if (statuses.some((status) => status === "COMPLETED")) {
+      return "NEEDS_MORE_DATA";
+    }
+    if (statuses.some((status) => status === "RATE_LIMITED")) {
+      return "RATE_LIMITED";
+    }
+    return "FAILED";
+  }
+
+  private buildPlannerBranchTickSummary(
+    branches: ExecutionPlanBranch[],
+    summaryTrail: string[],
+  ): string {
+    if (summaryTrail.length === 0) {
+      return `Планировщик выполнил ${branches.length} ветки.`;
+    }
+    if (summaryTrail.length === 1) {
+      return summaryTrail[0];
+    }
+    return `Планировщик выполнил ${branches.length} ветки.\n${summaryTrail
+      .map((summary, index) => `${index + 1}. ${summary}`)
+      .join("\n")}`;
+  }
+
+  private resolveToollessPlannerBranchStatus(params: {
+    branch: ExecutionPlanBranch;
+    latestExecution:
+      | NonNullable<
+          Awaited<ReturnType<AgentRuntimeService["executeAgent"]>>["agentExecution"]
+        >
+      | null;
+  }): "COMPLETED" | "FAILED" | "NEEDS_MORE_DATA" | "RATE_LIMITED" {
+    const latest = params.latestExecution;
+    if (!latest) {
+      return "COMPLETED";
+    }
+    if (latest.status === "FAILED" || latest.status === "RATE_LIMITED") {
+      return latest.status;
+    }
+    if (latest.status === "NEEDS_MORE_DATA") {
+      return "NEEDS_MORE_DATA";
+    }
+
+    const structuredOutput = latest.structuredOutput ?? {};
+    const runtimePayload =
+      this.extractTechMapWorkflowRuntimePayload(structuredOutput);
+    const data = this.pickRecord(structuredOutput, "data") ?? {};
+    const hasClarifyState =
+      Boolean(runtimePayload?.clarifyBatch) ||
+      Boolean(runtimePayload?.workflowResumeState);
+    const hasMissingContext =
+      this.extractStringArray(
+        structuredOutput,
+        "missingContext",
+        "missing_context",
+        "data_gaps",
+        "dataGaps",
+      ).length > 0 ||
+      this.extractStringArray(
+        data,
+        "missingContext",
+        "missing_context",
+        "data_gaps",
+        "dataGaps",
+      ).length > 0;
+
+    if (
+      params.branch.intent === "clarify_context" ||
+      params.branch.branchId.includes("clarify")
+    ) {
+      return hasClarifyState || hasMissingContext
+        ? "NEEDS_MORE_DATA"
+        : "COMPLETED";
+    }
+
+    return "COMPLETED";
+  }
+
+  private buildToollessPlannerBranchSummary(
+    branch: ExecutionPlanBranch,
+    status: "COMPLETED" | "FAILED" | "NEEDS_MORE_DATA" | "RATE_LIMITED",
+  ): string {
+    if (status === "NEEDS_MORE_DATA") {
+      return `Ветка ${branch.branchId} ожидает добора контекста.`;
+    }
+    if (status === "FAILED") {
+      return `Ветка ${branch.branchId} завершилась с ошибкой без runtime tool.`;
+    }
+    if (status === "RATE_LIMITED") {
+      return `Ветка ${branch.branchId} отложена из-за rate limit.`;
+    }
+    return `Ветка ${branch.branchId} синхронизирована без отдельного tool call.`;
+  }
+
+  private mergeAuditPayload(
+    left: AgentExecutionAuditPayload | undefined,
+    right: AgentExecutionAuditPayload | undefined,
+  ): AgentExecutionAuditPayload | undefined {
+    if (!left && !right) {
+      return undefined;
+    }
+    if (!left && right) {
+      return {
+        ...right,
+        allowedToolNames: [...right.allowedToolNames],
+        blockedToolNames: [...right.blockedToolNames],
+        connectorNames: [...right.connectorNames],
+      };
+    }
+    if (left && !right) {
+      return left;
+    }
+    return {
+      runtimeMode: right?.runtimeMode ?? left!.runtimeMode,
+      model: right?.model ?? left!.model,
+      provider: right?.provider ?? left!.provider,
+      autonomyMode: right?.autonomyMode ?? left!.autonomyMode,
+      allowedToolNames: this.uniqueStrings([
+        ...(left?.allowedToolNames ?? []),
+        ...(right?.allowedToolNames ?? []),
+      ]),
+      blockedToolNames: this.uniqueStrings([
+        ...(left?.blockedToolNames ?? []),
+        ...(right?.blockedToolNames ?? []),
+      ]),
+      connectorNames: this.uniqueStrings([
+        ...(left?.connectorNames ?? []),
+        ...(right?.connectorNames ?? []),
+      ]),
+      outputContractId: right?.outputContractId ?? left!.outputContractId,
+    };
+  }
+
+  private buildPlannerAggregateAuditPayload(
+    executedTools: Array<{ name: RaiToolName; result: unknown }>,
+  ): AgentExecutionAuditPayload {
+    return {
+      runtimeMode:
+        (process.env.RAI_AGENT_RUNTIME_MODE ?? "agent-first-hybrid") ===
+        "agent-first-hybrid"
+          ? "agent-first-hybrid"
+          : "tool-first-legacy",
+      autonomyMode: "advisory",
+      allowedToolNames: this.uniqueStrings(
+        executedTools.map((tool) => tool.name),
+      ),
+      blockedToolNames: [],
+      connectorNames: [],
+      outputContractId: "planner-aggregate-v1",
+    };
+  }
+
   private mergeUsage(
     left?:
       | {
@@ -1541,7 +2303,7 @@ export class SupervisorAgent {
             intent: explicitContract.id,
             toolName: explicitPrimaryTool.name,
             confidence: 1,
-            method: "tool_call_primary",
+            method: "explicit_tool_path",
             reason: `explicit_tool_call:${explicitPrimaryTool.name}`,
           },
           requestedToolCalls: explicitToolCalls,
@@ -1593,7 +2355,7 @@ export class SupervisorAgent {
       workspaceContext: request.workspaceContext,
       traceId,
       threadId,
-      legacyClassification: legacyPlan.classification,
+      baselineClassification: legacyPlan.classification,
       requestedToolCalls: legacyPlan.requestedToolCalls,
       allowPrimaryPromotion: legacyPlan.semanticPrimaryAllowed,
     });
@@ -1608,7 +2370,7 @@ export class SupervisorAgent {
       : legacyPlan.requestedToolCalls;
     const semanticIngressFrame = this.semanticIngress.buildFrame({
       request,
-      legacyClassification: legacyPlan.classification,
+      baselineClassification: legacyPlan.classification,
       finalClassification: classification,
       finalRequestedToolCalls: requestedToolCalls,
       semanticEvaluation,
@@ -1633,7 +2395,7 @@ export class SupervisorAgent {
         activeFlow:
           semanticEvaluation.semanticIntent.dialogState.activeFlow ?? null,
         userQueryRedacted: request.message,
-        legacyClassification: legacyPlan.classification,
+        baselineClassification: legacyPlan.classification,
         semanticIntent: semanticEvaluation.semanticIntent,
         routeDecision: semanticEvaluation.routeDecision,
         candidateRoutes: semanticEvaluation.candidateRoutes,
@@ -1697,6 +2459,20 @@ export class SupervisorAgent {
       return semanticOwnerRole;
     }
     return params.classification.targetRole ?? "knowledge";
+  }
+
+  /** Лимит одновременных RUNNING-веток планировщика: trust.maxTrackedBranches, сжимается env `RAI_PLANNER_MAX_CONCURRENT_BRANCHES`. */
+  private resolvePlannerMaxConcurrentBranches(role: string): number {
+    const trust = this.runtimeGovernancePolicy.getTrustBudget(role);
+    const raw = process.env.RAI_PLANNER_MAX_CONCURRENT_BRANCHES;
+    if (raw === undefined || raw === "") {
+      return trust.maxTrackedBranches;
+    }
+    const n = Number.parseInt(raw, 10);
+    if (!Number.isFinite(n) || n < 1) {
+      return trust.maxTrackedBranches;
+    }
+    return Math.min(trust.maxTrackedBranches, n);
   }
 
   private applyTechMapWorkflowFrame(params: {
@@ -1852,6 +2628,48 @@ export class SupervisorAgent {
             Boolean(item) && typeof item === "object" && !Array.isArray(item),
         )
       : null;
+  }
+
+  private async maybeApplyPlannerMutationResume(
+    request: RaiChatRequestDto,
+    companyId: string,
+    surface: ExecutionSurfaceState,
+  ): Promise<ExecutionSurfaceState> {
+    const blockedWithPa = surface.branches.filter(
+      (b) =>
+        b.lifecycle === "BLOCKED_ON_CONFIRMATION" &&
+        b.mutationState === "PENDING" &&
+        typeof b.pendingActionId === "string" &&
+        b.pendingActionId.length > 0,
+    );
+    if (blockedWithPa.length > 0) {
+      const id = request.executionPlannerApprovedPendingActionId?.trim();
+      if (!id) {
+        this.logger.warn(
+          "executionPlannerMutationApproved без executionPlannerApprovedPendingActionId при pendingActionId в поверхности",
+        );
+        return surface;
+      }
+      if (!blockedWithPa.some((b) => b.pendingActionId === id)) {
+        this.logger.warn(
+          "executionPlannerApprovedPendingActionId не совпадает с ветками BLOCKED",
+        );
+        return surface;
+      }
+      try {
+        await this.pendingActionService.assertApprovedFinalForPlannerResume(
+          id,
+          companyId,
+        );
+      } catch (e) {
+        this.logger.warn(
+          `assertApprovedFinalForPlannerResume: ${String((e as Error)?.message ?? e)}`,
+        );
+        return surface;
+      }
+      return applyPlannerMutationApprovalToSurface(surface, id);
+    }
+    return applyPlannerMutationApprovalToSurface(surface);
   }
 
   private mapRoutingOutcome(

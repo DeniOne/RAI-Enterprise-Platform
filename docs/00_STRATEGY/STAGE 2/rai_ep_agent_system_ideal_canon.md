@@ -3,13 +3,13 @@ id: DOC-STR-STAGE-2-RAI-EP-AGENT-SYSTEM-IDEAL-CANON-20260403
 layer: Strategy
 type: Vision
 status: draft
-version: 0.1.0
+version: 0.2.0
 owners: [@techlead]
-last_updated: 2026-04-03
+last_updated: 2026-04-05
 claim_id: CLAIM-STR-STAGE2-AGENT-SYSTEM-IDEAL-CANON-20260403
 claim_status: asserted
 verified_by: manual
-last_verified: 2026-04-03
+last_verified: 2026-04-05
 evidence_refs: docs/00_STRATEGY/STAGE 2/INDEX.md;docs/00_STRATEGY/STAGE 2/RAI_AGENT_PLATFORM_AND_AI_MASTER_PLAN.md;docs/00_STRATEGY/STAGE 2/rai_ep_agent_system_target_implementation_blueprint.md;docs/07_EXECUTION/AGENT_SYSTEM_ASIS_TOBE_2026-04-03.md
 ---
 # RAI_EP — Канонический документ целевой агентной системы
@@ -18,7 +18,7 @@ evidence_refs: docs/00_STRATEGY/STAGE 2/INDEX.md;docs/00_STRATEGY/STAGE 2/RAI_AG
 id: CLAIM-STR-STAGE2-AGENT-SYSTEM-IDEAL-CANON-20260403
 status: asserted
 verified_by: manual
-last_verified: 2026-04-03
+last_verified: 2026-04-05
 
 Этот документ является ideal reference-каноном целевой агентной системы `RAI_EP`. Он фиксирует north-star архитектуру и инженерную модель target-state, но не утверждает, что все описанные свойства уже подтверждены текущим runtime.
 
@@ -27,6 +27,8 @@ last_verified: 2026-04-03
 **Роль документа:** canonical target-state / ideal architecture reference  
 **Назначение:** единая опорная модель целевой агентной системы RAI_EP, от которой ведётся архитектурная, backend, agent-runtime, UX/UI и governance-декомпозиция.  
 **Статус истины:** этот документ описывает **целевое состояние** и **каноническую инженерную модель**, а не утверждает, что всё уже существует в runtime.
+
+По состоянию на `2026-04-05` репозиторий практически доведён до этого идеала в живом кодовом контуре: межагентный runtime structured-first/JSON-only по execution-полю, canonical planner/runtime vocabulary очищен от historical aliases, а `legacyClassification` / `legacyRouteKey` отсутствуют в non-test code. Буквальное соответствие по живому runtime и primary contracts подтверждается code/tests/gates; историческая совместимость остаётся только в test/eval corpus loader-слое и не определяет архитектуру runtime.
 
 ---
 

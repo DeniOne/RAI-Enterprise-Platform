@@ -76,14 +76,14 @@ describe("Semantic Ingress proof-slice eval corpus", () => {
         workspaceContext: evalCase.request.workspaceContext,
       };
 
-      const legacyClassification = intentRouter.classify(
+      const baselineClassification = intentRouter.classify(
         request.message,
         request.workspaceContext as any,
       );
       const autoToolCall = intentRouter.buildAutoToolCall(
         request.message,
         request as any,
-        legacyClassification,
+        baselineClassification,
       );
       const requestedToolCalls = autoToolCall
         ? [
@@ -100,7 +100,7 @@ describe("Semantic Ingress proof-slice eval corpus", () => {
         workspaceContext: request.workspaceContext as any,
         traceId: `trace-${evalCase.id}`,
         threadId: `thread-${evalCase.id}`,
-        legacyClassification,
+        baselineClassification,
         requestedToolCalls,
         allowPrimaryPromotion: true,
       });
@@ -108,21 +108,21 @@ describe("Semantic Ingress proof-slice eval corpus", () => {
       const finalClassification: IntentClassification =
         semanticEvaluation.promotedPrimary
           ? semanticEvaluation.classification
-          : legacyClassification;
+          : baselineClassification;
       const finalRequestedToolCalls = semanticEvaluation.promotedPrimary
         ? semanticEvaluation.requestedToolCalls
         : requestedToolCalls;
 
       const frame = semanticIngress.buildFrame({
         request: request as any,
-        legacyClassification,
+        baselineClassification,
         finalClassification,
         finalRequestedToolCalls,
         semanticEvaluation,
       });
 
-      expect(legacyClassification.intent).toBe(evalCase.expected.intent);
-      expect(legacyClassification.toolName).toBe(evalCase.expected.toolName);
+      expect(baselineClassification.intent).toBe(evalCase.expected.intent);
+      expect(baselineClassification.toolName).toBe(evalCase.expected.toolName);
       expect(finalRequestedToolCalls.map((toolCall) => toolCall.name)).toEqual([
         evalCase.expected.toolName,
       ]);

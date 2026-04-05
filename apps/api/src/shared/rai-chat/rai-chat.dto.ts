@@ -9,6 +9,7 @@ import {
   ArrayMaxSize,
   IsEnum,
   IsNumber,
+  IsBoolean,
 } from "class-validator";
 import { Type } from "class-transformer";
 import type {
@@ -20,6 +21,7 @@ import type {
 } from "./branch-trust.types";
 import { RaiSuggestedAction, RaiToolName } from "./rai-tools.types";
 import { RaiChatWidget } from "./rai-chat-widgets.types";
+import type { ExecutionSurfaceState } from "./execution-target-state.types";
 
 export enum WorkspaceEntityKind {
   farm = "farm",
@@ -265,6 +267,26 @@ export class ClarificationResumeCollectedContextDto {
   @IsOptional()
   @MaxLength(128)
   eventDate?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(128)
+  batchId?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(128)
+  itemId?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(32)
+  uom?: string;
+
+  @Type(() => Number)
+  @IsNumber()
+  @IsOptional()
+  qty?: number;
 
   @IsString()
   @IsOptional()
@@ -663,6 +685,17 @@ export class RaiChatRequestDto {
   @ValidateNested()
   @Type(() => ClarificationResumeDto)
   clarificationResume?: ClarificationResumeDto;
+
+  /** Продолжение планировщика: подтверждение мутации (BLOCKED_ON_CONFIRMATION → RUNNING). */
+  @IsBoolean()
+  @IsOptional()
+  executionPlannerMutationApproved?: boolean;
+
+  /** Id `PendingAction` в статусе APPROVED_FINAL — обязателен, если на поверхности есть ветка с `pendingActionId`. */
+  @IsString()
+  @IsOptional()
+  @MaxLength(128)
+  executionPlannerApprovedPendingActionId?: string;
 }
 
 export class RaiToolCallDto {
@@ -677,9 +710,9 @@ export class RaiIntermediateStepDto {
   @IsString()
   @MaxLength(64)
   executionPath:
-    | "tool_call_primary"
-    | "heuristic_fallback"
-    | "semantic_router_primary";
+    | "explicit_tool_path"
+    | "fallback_interpretation"
+    | "semantic_route_primary";
 
   @IsString()
   @MaxLength(128)
@@ -733,6 +766,27 @@ export class RaiIntermediateStepDto {
   @IsOptional()
   @IsNumber()
   totalTokens?: number;
+}
+
+/** Структурированный explainability-срез по веткам (ядро Phase B, не prose). */
+export interface ExecutionExplainabilityBranchV1 {
+  branchId: string;
+  lifecycle: string;
+  mutationState: string;
+  policyDecision: string | null;
+  pendingActionId?: string;
+}
+
+export interface ExecutionExplainabilityConcurrencyDeferralV1 {
+  cap: number;
+  deferredBranchIds: string[];
+}
+
+export interface ExecutionExplainabilityV1 {
+  version: "v1";
+  branches: ExecutionExplainabilityBranchV1[];
+  /** Ветки отложены из-за лимита параллельных RUNNING (governance). */
+  concurrencyDeferral?: ExecutionExplainabilityConcurrencyDeferralV1;
 }
 
 export class RaiChatResponseDto {
@@ -829,4 +883,12 @@ export class RaiChatResponseDto {
 
   @IsOptional()
   trustSummary?: UserFacingTrustSummary;
+
+  @IsOptional()
+  @IsObject()
+  executionSurface?: ExecutionSurfaceState;
+
+  @IsOptional()
+  @IsObject()
+  executionExplainability?: ExecutionExplainabilityV1;
 }

@@ -124,7 +124,7 @@ describe('TraceForensicsPage memory lane rendering', () => {
             intent: 'register_counterparty',
             toolName: 'register_counterparty',
             decisionType: 'execute',
-            source: 'legacy_contracts',
+            source: 'fallback_normalization',
           },
           operationAuthority: 'direct_user_command',
           missingSlots: [],
@@ -185,7 +185,7 @@ describe('TraceForensicsPage memory lane rendering', () => {
     expect(screen.getByText('Отброшено')).toBeInTheDocument();
     expect(screen.getByText(/Причина эскалации:/i)).toBeInTheDocument();
     expect(screen.getByText(/runtime_governance_degraded/i)).toBeInTheDocument();
-    expect(screen.getByText('Semantic Ingress Frame')).toBeInTheDocument();
+    expect(screen.getByText('Входной семантический кадр')).toBeInTheDocument();
     expect(screen.getByText(/crm\.register_counterparty/i)).toBeInTheDocument();
     expect(screen.getByText(/crm_agent • register_counterparty/i)).toBeInTheDocument();
     expect(screen.getByText(/Свободная фраза нормализована в CRM-регистрацию контрагента по ИНН как прямое действие пользователя/i)).toBeInTheDocument();

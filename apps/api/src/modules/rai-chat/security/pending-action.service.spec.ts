@@ -168,4 +168,26 @@ describe("PendingActionService", () => {
     });
     expect(result).toEqual([nowAction]);
   });
+
+  it("assertApprovedFinalForPlannerResume: проходит при APPROVED_FINAL", async () => {
+    mockFindFirst.mockResolvedValue({
+      id: "pa-final",
+      companyId,
+      status: PendingActionStatus.APPROVED_FINAL,
+    });
+    await expect(
+      service.assertApprovedFinalForPlannerResume("pa-final", companyId),
+    ).resolves.toBeUndefined();
+  });
+
+  it("assertApprovedFinalForPlannerResume: ошибка если не APPROVED_FINAL", async () => {
+    mockFindFirst.mockResolvedValue({
+      id: "pa-wait",
+      companyId,
+      status: PendingActionStatus.PENDING,
+    });
+    await expect(
+      service.assertApprovedFinalForPlannerResume("pa-wait", companyId),
+    ).rejects.toThrow(/PLANNER_RESUME_PENDING_ACTION_NOT_FINAL/);
+  });
 });

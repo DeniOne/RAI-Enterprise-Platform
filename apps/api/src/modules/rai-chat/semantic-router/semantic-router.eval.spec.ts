@@ -10,7 +10,7 @@ type EvalCorpusCase = {
   request: {
     message: string;
     workspaceContext?: Record<string, unknown>;
-    legacyClassification: {
+    baselineClassification: {
       targetRole: IntentClassification["targetRole"];
       intent: string | null;
       toolName: RaiToolName | null;
@@ -27,7 +27,7 @@ type EvalCorpusCase = {
   expected: {
     sliceId: string | null;
     promotedPrimary: boolean;
-    executionPath: "semantic_router_shadow" | "semantic_router_primary";
+    executionPath: "semantic_route_shadow" | "semantic_route_primary";
     classificationIntent: string | null;
     classificationMethod: IntentClassification["method"];
     decisionType: string;
@@ -43,6 +43,13 @@ type EvalCorpusCase = {
   };
 };
 
+type LegacyEvalCorpusCase = Omit<EvalCorpusCase, "request"> & {
+  request: Omit<EvalCorpusCase["request"], "baselineClassification"> & {
+    baselineClassification?: EvalCorpusCase["request"]["baselineClassification"];
+    legacyClassification?: EvalCorpusCase["request"]["baselineClassification"];
+  };
+};
+
 function loadCorpus(): EvalCorpusCase[] {
   const fixturesDir = path.join(__dirname, "fixtures");
   return fs
@@ -53,9 +60,15 @@ function loadCorpus(): EvalCorpusCase[] {
       const fixturePath = path.join(fixturesDir, fileName);
       const raw = JSON.parse(
         fs.readFileSync(fixturePath, "utf-8"),
-      ) as EvalCorpusCase[];
+      ) as LegacyEvalCorpusCase[];
       return raw.map((item) => ({
         ...item,
+        request: {
+          ...item.request,
+          baselineClassification:
+            item.request.baselineClassification ??
+            item.request.legacyClassification!,
+        },
         corpusName: fileName,
       }));
     });
@@ -89,7 +102,7 @@ describe("SemanticRouterService primary slices eval corpus", () => {
         workspaceContext: evalCase.request.workspaceContext as any,
         traceId: `trace-${evalCase.id}`,
         threadId: `thread-${evalCase.id}`,
-        legacyClassification: evalCase.request.legacyClassification,
+        baselineClassification: evalCase.request.baselineClassification,
         requestedToolCalls: evalCase.request.requestedToolCalls,
         allowPrimaryPromotion: evalCase.request.allowPrimaryPromotion,
       });

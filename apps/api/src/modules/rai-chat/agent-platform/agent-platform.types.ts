@@ -162,10 +162,9 @@ export interface AgentExecutionResult {
   role: string;
   status: "COMPLETED" | "FAILED" | "NEEDS_MORE_DATA" | "RATE_LIMITED";
   executionPath?:
-    | "tool_call_primary"
-    | "heuristic_fallback"
-    | "semantic_router_primary";
-  text: string;
+    | "explicit_tool_path"
+    | "fallback_interpretation"
+    | "semantic_route_primary";
   structuredOutput: Record<string, unknown>;
   structuredOutputs?: Record<string, unknown>[];
   branchResults?: BranchResultContract[];

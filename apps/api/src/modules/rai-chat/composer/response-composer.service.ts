@@ -8,6 +8,7 @@ import {
   EvidenceReference,
   PendingClarificationDto,
   RaiWorkWindowDto,
+  type ExecutionExplainabilityV1,
 } from "../dto/rai-chat.dto";
 import {
   RaiSuggestedAction,
@@ -62,6 +63,11 @@ import {
   UserFacingBranchCompositionPayload,
   UserFacingTrustSummary,
 } from "../../../shared/rai-chat/branch-trust.types";
+import { resolveOverallBranchVerdictFromCounts } from "../../../shared/rai-chat/branch-verdict-rules";
+import {
+  extractStructuredRuntimeSummary,
+  resolveAgentExecutionSummary,
+} from "../../../shared/rai-chat/agent-execution-summary";
 import { CompositeWorkflowPlan } from "../../../shared/rai-chat/composite-orchestration.types";
 import {
   buildPendingClarificationItems,
@@ -84,6 +90,7 @@ import {
   resolveCounterpartyRouteFromWorkspaceData,
   buildToolDisplayName,
 } from "../../../shared/rai-chat/response-composer-presenters";
+import type { SemanticIngressFrame } from "../../../shared/rai-chat/semantic-ingress.types";
 import { InvariantMetrics } from "../../../shared/invariants/invariant-metrics";
 
 export interface BuildResponseParams {
@@ -97,6 +104,7 @@ export interface BuildResponseParams {
   traceId: string;
   threadId: string;
   companyId: string;
+  semanticIngressFrame?: SemanticIngressFrame;
 }
 
 interface BranchSynthesisEntry {
@@ -187,6 +195,7 @@ export class ResponseComposerService {
       traceId,
       threadId,
       companyId,
+      semanticIngressFrame,
     } = params;
     const { recall, profile } = recallResult;
     const clientFacing = request.audience === "client_front_office";
@@ -264,7 +273,13 @@ export class ResponseComposerService {
     }
 
     if (executionResult.agentExecution) {
-      text = executionResult.agentExecution.text;
+      text = resolveAgentExecutionSummary({
+        structuredOutput: executionResult.agentExecution.structuredOutput,
+        structuredOutputs: executionResult.agentExecution.structuredOutputs,
+        branchCompositions: executionResult.agentExecution.branchCompositions,
+        branchResults: executionResult.agentExecution.branchResults,
+        fallback: text,
+      });
       if (
         readOnlyTechMapQuery &&
         executionResult.agentExecution.status === "NEEDS_MORE_DATA"
@@ -317,7 +332,7 @@ export class ResponseComposerService {
     const intermediateSteps = this.buildIntermediateSteps(executionResult);
     const trustSummary = this.buildUserFacingTrustSummary(executionResult);
 
-    const workWindowPayload = clientFacing
+    let workWindowPayload = clientFacing
       ? null
       : compositePayload
         ? compositePayload
@@ -331,6 +346,17 @@ export class ResponseComposerService {
             executionResult,
             richOutputPayload,
           );
+
+    if (!clientFacing && semanticIngressFrame?.executionSurface?.branches?.length) {
+      const surfaceBundle = this.buildExecutionSurfaceWorkWindows(
+        semanticIngressFrame,
+        traceId,
+      );
+      workWindowPayload = this.mergeWorkWindowPayloads(
+        surfaceBundle,
+        workWindowPayload,
+      );
+    }
 
     return {
       text,
@@ -364,7 +390,11 @@ export class ResponseComposerService {
       evidence: evidence.length > 0 ? evidence : undefined,
       runtimeBudget: executionResult.runtimeBudget,
       runtimeGovernance,
-      agentRole: executionResult.agentExecution?.role,
+      agentRole:
+        executionResult.agentExecution?.role ??
+        (executionResult.executedTools[0]?.name === "emit_alerts"
+          ? "monitoring"
+          : undefined),
       fallbackUsed: executionResult.agentExecution?.fallbackUsed,
       validation: executionResult.agentExecution?.validation,
       outputContractVersion:
@@ -381,6 +411,41 @@ export class ResponseComposerService {
         : workWindowPayload?.activeWindowId,
       intermediateSteps:
         intermediateSteps.length > 0 ? intermediateSteps : undefined,
+      executionSurface: semanticIngressFrame?.executionSurface ?? undefined,
+      executionExplainability:
+        !clientFacing &&
+        semanticIngressFrame?.executionSurface?.branches?.length
+          ? (() => {
+              const surface = semanticIngressFrame.executionSurface!;
+              const meta = surface.plannerAdvanceMeta;
+              const deferred = new Set(meta?.deferredRunnableBranchIds ?? []);
+              const explain: ExecutionExplainabilityV1 = {
+                  version: "v1" as const,
+                  branches: surface.branches.map((b) => ({
+                    branchId: b.branchId,
+                    lifecycle: b.lifecycle,
+                    mutationState: b.mutationState,
+                    policyDecision:
+                      deferred.has(b.branchId) && b.lifecycle === "PLANNED"
+                        ? "branch_concurrency_cap"
+                        : (semanticIngressFrame.writePolicy?.decision ?? null),
+                    ...(b.pendingActionId
+                      ? { pendingActionId: b.pendingActionId }
+                      : {}),
+                  })),
+                };
+              if (
+                meta &&
+                meta.deferredRunnableBranchIds.length > 0
+              ) {
+                explain.concurrencyDeferral = {
+                  cap: meta.concurrencyCap,
+                  deferredBranchIds: meta.deferredRunnableBranchIds,
+                };
+              }
+              return explain;
+            })()
+          : undefined,
     };
   }
 
@@ -389,7 +454,8 @@ export class ResponseComposerService {
   ): RaiChatResponseDto["intermediateSteps"] {
     if (executionResult.agentExecution) {
       const executionPath =
-        executionResult.agentExecution.executionPath ?? "heuristic_fallback";
+        executionResult.agentExecution.executionPath ??
+        "fallback_interpretation";
       const confidence =
         executionResult.agentExecution.structuredOutput &&
         typeof executionResult.agentExecution.structuredOutput === "object" &&
@@ -428,7 +494,7 @@ export class ResponseComposerService {
     }
 
     return executionResult.executedTools.map((tool) => ({
-      executionPath: "heuristic_fallback",
+      executionPath: "fallback_interpretation",
       toolName: tool.name,
       status: "COMPLETED",
     }));
@@ -468,7 +534,10 @@ export class ResponseComposerService {
     const clarificationMode = this.resolveClarificationWindowMode({
       status: agentExecution.status,
       missingKeys,
-      resultText: agentExecution.text,
+      resultText: resolveAgentExecutionSummary({
+        structuredOutput: agentExecution.structuredOutput,
+        fallback: clarificationContract.pendingSummary,
+      }),
     });
 
     if (agentExecution.status === "NEEDS_MORE_DATA") {
@@ -551,7 +620,10 @@ export class ResponseComposerService {
     if (request.clarificationResume && agentExecution.status === "COMPLETED") {
       const resultHintWindowId = `${windowId}-result-hint`;
       return {
-        text: agentExecution.text,
+        text: resolveAgentExecutionSummary({
+          structuredOutput: agentExecution.structuredOutput,
+          fallback: clarificationContract.resultSummary,
+        }),
         pendingClarification: null,
         workWindows: [
           {
@@ -577,7 +649,10 @@ export class ResponseComposerService {
               seasonId: context.seasonId,
               planId: context.planId,
               missingKeys: [],
-              resultText: agentExecution.text,
+              resultText: resolveAgentExecutionSummary({
+                structuredOutput: agentExecution.structuredOutput,
+                fallback: clarificationContract.resultSummary,
+              }),
             },
             actions: [],
             isPinned: false,
@@ -605,7 +680,10 @@ export class ResponseComposerService {
               seasonId: context.seasonId,
               planId: context.planId,
               missingKeys: [],
-              resultText: agentExecution.text,
+              resultText: resolveAgentExecutionSummary({
+                structuredOutput: agentExecution.structuredOutput,
+                fallback: clarificationContract.resultHintSummary,
+              }),
             },
             actions: clarificationContract.buildResultHintActions(
               windowId,
@@ -631,7 +709,7 @@ export class ResponseComposerService {
 
     const bullets = outputs
       .map((output, index) => {
-        const summary = this.extractStructuredSummary(output);
+        const summary = extractStructuredRuntimeSummary(output);
         if (!summary) {
           return null;
         }
@@ -844,28 +922,6 @@ export class ResponseComposerService {
     return [...new Set([...compositionDisclosure, ...assessmentReasons])];
   }
 
-  private extractStructuredSummary(output: Record<string, unknown>): string | null {
-    const summaryFields = [
-      output.summary,
-      output.explanation,
-      output.recommendation,
-      output.status,
-    ];
-    for (const value of summaryFields) {
-      if (typeof value === "string" && value.trim().length > 0) {
-        return value.trim();
-      }
-    }
-    const data = output.data;
-    if (data && typeof data === "object" && !Array.isArray(data)) {
-      const maybeSummary = (data as Record<string, unknown>).summary;
-      if (typeof maybeSummary === "string" && maybeSummary.trim().length > 0) {
-        return maybeSummary.trim();
-      }
-    }
-    return null;
-  }
-
   private buildRichOutputPayload(
     request: RaiChatRequestDto,
     executionResult: ExecutionResult,
@@ -912,7 +968,14 @@ export class ResponseComposerService {
       widgets,
       agentRole: executionResult.agentExecution?.role ?? "knowledge",
       baseWindowId: `win-legacy-${request.threadId ?? "new"}`,
-      summary: executionResult.agentExecution?.text,
+      summary: executionResult.agentExecution
+        ? resolveAgentExecutionSummary({
+            structuredOutput: executionResult.agentExecution.structuredOutput,
+            branchCompositions: executionResult.agentExecution.branchCompositions,
+            branchResults: executionResult.agentExecution.branchResults,
+            fallback: undefined,
+          })
+        : undefined,
     });
 
     return mapped.workWindows.length > 0 ? mapped : null;
@@ -1280,26 +1343,7 @@ export class ResponseComposerService {
         REJECTED: 0,
       } satisfies Record<BranchVerdict, number>,
     );
-    const hasVerified = counts.VERIFIED > 0;
-    const hasMixedCoverage =
-      counts.PARTIAL + counts.UNVERIFIED + counts.REJECTED > 0;
-
-    if (counts.CONFLICTED > 0) {
-      return "CONFLICTED";
-    }
-    if (hasVerified && hasMixedCoverage) {
-      return "PARTIAL";
-    }
-    if (counts.PARTIAL > 0) {
-      return "PARTIAL";
-    }
-    if (counts.REJECTED > 0 && counts.VERIFIED === 0) {
-      return "REJECTED";
-    }
-    if (counts.UNVERIFIED > 0) {
-      return "UNVERIFIED";
-    }
-    return "VERIFIED";
+    return resolveOverallBranchVerdictFromCounts(counts);
   }
 
   private buildBranchTrustSummaryText(
@@ -2105,7 +2149,14 @@ export class ResponseComposerService {
     const summary = buildCrmSummary(
       intent,
       data,
-      agentExecution?.text ?? "CRM-операция выполнена.",
+      agentExecution
+        ? resolveAgentExecutionSummary({
+            structuredOutput: agentExecution.structuredOutput,
+            branchCompositions: agentExecution.branchCompositions,
+            branchResults: agentExecution.branchResults,
+            fallback: "CRM-операция выполнена.",
+          })
+        : "CRM-операция выполнена.",
       request.message,
     );
     const reviewWorkspaceRoute =
@@ -2495,7 +2546,14 @@ export class ResponseComposerService {
           summary: buildContractsSummary(
             intent,
             data,
-            agentExecution?.text ?? "Commerce-операция выполнена.",
+            agentExecution
+              ? resolveAgentExecutionSummary({
+                  structuredOutput: agentExecution.structuredOutput,
+                  branchCompositions: agentExecution.branchCompositions,
+                  branchResults: agentExecution.branchResults,
+                  fallback: "Commerce-операция выполнена.",
+                })
+              : "Commerce-операция выполнена.",
           ),
           missingKeys: [],
           sections: buildContractsSections(intent, data),
@@ -2997,6 +3055,70 @@ export class ResponseComposerService {
       default:
         return 0.5;
     }
+  }
+
+  private mergeWorkWindowPayloads(
+    first: WorkWindowPayloadBundle | null,
+    second: WorkWindowPayloadBundle | null,
+  ): WorkWindowPayloadBundle | null {
+    if (!first) {
+      return second;
+    }
+    if (!second) {
+      return first;
+    }
+    return {
+      workWindows: [...first.workWindows, ...second.workWindows],
+      activeWindowId: second.activeWindowId ?? first.activeWindowId,
+    };
+  }
+
+  /** Проекция executionSurface в workWindows (Phase C: только чтение runtime). */
+  private buildExecutionSurfaceWorkWindows(
+    frame: SemanticIngressFrame,
+    traceId: string,
+  ): WorkWindowPayloadBundle | null {
+    const surface = frame.executionSurface;
+    if (!surface?.branches?.length) {
+      return null;
+    }
+    const owner =
+      frame.requestedOperation.ownerRole ??
+      frame.domainCandidates[0]?.ownerRole ??
+      "supervisor";
+    const windowId = `exec_surface_${traceId}`;
+    return {
+      workWindows: [
+        {
+          windowId,
+          originMessageId: null,
+          agentRole: owner,
+          type: "structured_result",
+          category: "analysis",
+          priority: 12,
+          mode: "panel",
+          title: "Состояние веток исполнения",
+          status: "informational",
+          payload: {
+            intentId: "branch_trust_summary",
+            summary:
+              "Канонические статусы веток из оркестратора (без локальной подмены UI).",
+            missingKeys: [],
+            sections: surface.branches.map((b) => ({
+              id: b.branchId,
+              title: b.branchId,
+              items: [
+                { label: "Жизненный цикл", value: b.lifecycle },
+                { label: "Мутация", value: b.mutationState },
+              ],
+            })),
+          },
+          actions: [],
+          isPinned: false,
+        },
+      ],
+      activeWindowId: null,
+    };
   }
 
   private buildDirectAnswerForRequest(

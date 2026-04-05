@@ -2,15 +2,15 @@
 id: DOC-STR-STAGE-2-RAI-EP-TARGET-IMPLEMENTATION-BLUEPRINT-20260403
 layer: Strategy
 type: Roadmap
-status: draft
-version: 1.0.0
+status: active
+version: 1.30.0
 owners: [@techlead]
-last_updated: 2026-04-03
+last_updated: 2026-04-05
 claim_id: CLAIM-STR-STAGE2-TARGET-IMPLEMENTATION-BLUEPRINT-20260403
 claim_status: asserted
 verified_by: manual
-last_verified: 2026-04-03
-evidence_refs: docs/00_STRATEGY/STAGE 2/INDEX.md;docs/00_STRATEGY/STAGE 2/RAI_AGENT_PLATFORM_AND_AI_MASTER_PLAN.md;docs/00_STRATEGY/STAGE 2/RAI_AGENT_PLATFORM_AND_AI_MASTER_PLAN_ADDENDUM_AGENT_FOCUS_AND_CONTEXT.md;docs/00_STRATEGY/STAGE 2/RAI_AGENT_DOMAIN_OWNERSHIP_MAP.md;docs/00_STRATEGY/STAGE 2/RAI_AGENT_RUNTIME_GOVERNANCE.md;docs/00_STRATEGY/STAGE 2/RAI_AGENT_EVOLUTION_AND_LIFECYCLE.md;docs/00_STRATEGY/STAGE 2/RAI_SWARM_CONTROL_TOWER_ARCHITECTURE.md;docs/00_STRATEGY/STAGE 2/rai_ep_agent_system_ideal_canon.md;docs/07_EXECUTION/AGENT_SYSTEM_ASIS_TOBE_2026-04-03.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_B_IMPLEMENTATION_PLAN.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_C_NEW_CHAT_MEMO.md;docs/07_EXECUTION/ONE_BIG_PHASE/PHASE_D_IMPLEMENTATION_PLAN.md;apps/api/src/modules/rai-chat
+last_verified: 2026-04-05
+evidence_refs: docs/00_STRATEGY/STAGE 2/INDEX.md;docs/00_STRATEGY/STAGE 2/RAI_AGENT_PLATFORM_AND_AI_MASTER_PLAN.md;docs/00_STRATEGY/STAGE 2/RAI_AGENT_PLATFORM_AND_AI_MASTER_PLAN_ADDENDUM_AGENT_FOCUS_AND_CONTEXT.md;docs/00_STRATEGY/STAGE 2/rai_ep_agent_system_ideal_canon.md;docs/07_EXECUTION/AGENT_SYSTEM_ASIS_TOBE_2026-04-03.md;docs/07_EXECUTION/AGENT_TARGET_BLUEPRINT_IMPLEMENTATION_SLICE_CLOSEOUT_2026-04-04.md;apps/api/src/modules/rai-chat;apps/api/src/shared/rai-chat
 ---
 # RAI_EP — Target Implementation Blueprint
 
@@ -18,257 +18,179 @@ evidence_refs: docs/00_STRATEGY/STAGE 2/INDEX.md;docs/00_STRATEGY/STAGE 2/RAI_AG
 id: CLAIM-STR-STAGE2-TARGET-IMPLEMENTATION-BLUEPRINT-20260403
 status: asserted
 verified_by: manual
-last_verified: 2026-04-03
+last_verified: 2026-04-05
 
-Этот документ является активным bridge-документом `Stage 2`: он переводит текущий подтверждённый runtime, действующий `master-plan` и идеальный канон агентной системы в один согласованный маршрут `current state -> gaps -> target state`. Документ не подменяет `RAI_AGENT_PLATFORM_AND_AI_MASTER_PLAN.md` как главный active canon и не утверждает, что целевая картина уже реализована в коде.
+Bridge-документ `Stage 2`: маршрут `current state → gaps → target state`. Он не подменяет `RAI_AGENT_PLATFORM_AND_AI_MASTER_PLAN.md`, но по состоянию на `2026-04-05` его repo-side target-gap закрыт кодом, тестами, control-tower surface и execution/runbook-пакетом. После `2026-04-05` repo ушёл ещё дальше к `ideal canon`: live runtime/telemetry path больше не эмитит `legacyClassification` / `legacyRouteKey`, server-side и web primary vocabulary очищены от historical execution/routing aliases, а compatibility-слой сжат до historical-read fallback. Формальный execution closeout вынесен в [AGENT_TARGET_BLUEPRINT_IMPLEMENTATION_SLICE_CLOSEOUT_2026-04-04.md](/root/RAI_EP/docs/07_EXECUTION/AGENT_TARGET_BLUEPRINT_IMPLEMENTATION_SLICE_CLOSEOUT_2026-04-04.md).
 
-## 0. Роль документа
+---
 
-Этот blueprint нужен не для перезапуска `Stage 2` “с нуля”, а для устранения разрыва между:
+## Навигационное правило
 
-- текущим подтверждённым agent runtime в `apps/api/src/modules/rai-chat`;
-- активной стратегией `Stage 2`;
-- идеальной картиной из `rai_ep_agent_system_ideal_canon.md`.
+Ниже остаётся capability-snapshot для навигации между стратегией и кодом:
 
-Правило чтения:
+- `[x]` означает, что в репозитории есть реализация и автоматизированная опора в `code/tests/gates`;
+- `[~]` означает частичное закрытие или сознательно незамкнутый контракт;
+- `[ ]` означает, что target-gap ещё не закрыт.
 
-1. Главный active canon `Stage 2` остаётся `RAI_AGENT_PLATFORM_AND_AI_MASTER_PLAN.md`.
-2. Факт текущего состояния фиксируется через код, тесты и [AGENT_SYSTEM_ASIS_TOBE_2026-04-03.md](/root/RAI_EP/docs/07_EXECUTION/AGENT_SYSTEM_ASIS_TOBE_2026-04-03.md).
-3. Этот blueprint задаёт путь закрытия разрывов до target-state.
-4. `rai_ep_agent_system_ideal_canon.md` используется как north-star reference, а не как утверждение о текущем runtime.
+Этот snapshot помогает читать разрыв до target-state, но не заменяет отдельный execution closeout.
 
-## 1. Подтверждённая точка старта
+---
 
-Стартовая база уже не нулевая.
+## Соответствие коду (жёстко)
 
-| Контур | Подтверждённое состояние | Что это означает для плана |
-|---|---|---|
-| Agent platform и governance | Платформенный каркас `Stage 2` в основном собран: registry, budget/runtime governance, incidents, eval/evidence, audit/trace, control-plane. | Blueprint не должен повторять программу build-out “с нуля”. |
-| Канонический orchestration spine | `SupervisorAgent -> SemanticRouter/SemanticIngress -> AgentRuntime -> ResponseComposer -> Truthfulness` уже работает как основной backend-контур. | Внедрение идёт через доращивание текущего spine, а не через его замену. |
-| Owner-агенты и доменный runtime | `agronomist`, `economist`, `knowledge`, `monitoring`, `crm_agent`, `front_office_agent`, `contracts_agent` уже являются реальными runtime-участниками. | Следующий шаг не в расширении зоопарка ролей, а в углублении orchestration semantics. |
-| Governed write-path | Risk policy, pending actions, confirmation path и audit trail уже существуют. | Нужно не изобретать новый safety contour, а унифицировать его под branch/runtime-модель target-state. |
-| Work windows и clarification UX | Первый reusable execution-surface slice уже живой в backend и UI. | `Phase C` должна потреблять готовое execution-state ядра, а не подменять собой ядро. |
-| TechMap-centered core-loop | Активная стратегия `One Big Phase` закрепляет Техкарту как центр ядра и выводит `execution / deviation / result` loop в `Phase B`. | Decomposition/planner slice должен строиться вокруг TechMap-loop, а не вокруг абстрактного chat-demo. |
-| Lifecycle, control tower и pilot-hardening | Для lifecycle, canary/rollback, control tower и `Phase D` уже есть активные каноны и implementation-планы. | Production governance и ops-путь нельзя считать “потом разберёмся”; они уже часть активной стратегии. |
+1. Любая строка с `[x]` должна иметь **якорь в коде** и **проверку** (unit/integration/eval, `pnpm gate:*`, workflow), перечисленную в `evidence_refs` или явно в примечании строки.
+2. Если поведение есть только в проде / в голове — строка **`[~]`** или **`[ ]`**, пока не появится артефакт в репо.
+3. Строки про control-tower / rollout / JSON-only слой переводятся в **`[x]`** только при наличии кода, тестов и repo-side execution evidence packet. Для этого документа таким пакетом считаются runtime/web спеки, planner/control-tower gates, explainability/control-tower UI smoke и runbook-документы `Phase D/E`.
 
-## 2. Что этот blueprint обязан исправить
+---
 
-Предыдущая версия blueprint была полезна как общая архитектурная программа, но имела стратегический drift. Эта версия вводит жёсткие ограничения:
+## Роли и ограничения (без изменений смысла)
 
-1. Нельзя начинать с `Wave 0` как будто platform/governance ещё не построены.
-2. Нельзя ставить user-facing `UI execution surface` раньше explainability/evidence/state core.
-3. Нельзя делать вид, что TechMap-loop вторичен относительно общего chat-orchestration.
-4. Нельзя выносить ownership map, runtime governance, lifecycle и control tower за рамки target-state.
-5. Нельзя трактовать этот документ как второй “главный canon” рядом с `master-plan`.
+1. Главный active canon Stage 2: `RAI_AGENT_PLATFORM_AND_AI_MASTER_PLAN.md`.
+2. Факт runtime: код, тесты, `docs/07_EXECUTION/AGENT_SYSTEM_ASIS_TOBE_2026-04-03.md`.
+3. Не перезапускать платформу «с нуля»; доращивать spine `Supervisor → SemanticIngress → AgentRuntime → ResponseComposer → Truthfulness`.
+4. UI execution surface не подменяет ядро; TechMap-loop — центр декомпозиции.
 
-Итоговое правило:
+---
 
-- `master-plan` отвечает за главный активный замысел;
-- этот blueprint отвечает за путь закрытия разрыва до идеального канона;
-- `code/tests/gates` остаются источником runtime truth.
+## Чеклист: карта разрывов → закрытие
 
-## 3. Карта разрывов `AS-IS -> IDEAL`
+| Разрыв | Статус | Примечание (якорь в коде / что намеренно не закрыто) |
+|--------|--------|------------------------------------------------------|
+| `SubIntentGraph` как first-class объект | [x] | `buildSubIntentGraphFromSemanticFrame`, `SemanticIngressService.buildFrame`, `explicitPlannerToolCalls`, `validateSubIntentGraphAntiTunnel`; спеки: `sub-intent-graph.*`, `semantic-ingress.service.spec.ts`. Отдельный standalone graph snapshot в audit без ingress — **не** реализован (см. Track 1). |
+| `ExecutionPlan` + planner-driven оркестрация | [x] | `BranchSchedulerService`, `SupervisorAgent` + `RAI_PLANNER_RUNTIME_ENABLED`; carry-forward `continueSameGraph`; `planner-thread-continuity.spec.ts`, `runtime-spine.integration.spec.ts`. Один primary `executeAgent` на HTTP-запрос — **текущий контракт** (не баг чеклиста). |
+| Строгие branch contracts / JSON-слой | [x] | `AgentExecutionResult` больше не содержит runtime-поля `text`; runtime adapters, `AgentRuntimeService` и planner/composite aggregate пишут summary только в `structuredOutput`. Human-facing prose собирается в `ResponseComposer` через `resolveAgentExecutionSummary` / `extractStructuredRuntimeSummary`. Server-side `IntentClassification.method`, execution-path contracts и web primary DTO/label maps очищены от historical aliases; старые literals живут только в historical-read fallback. Спеки: `agent-execution-summary.spec.ts`, `agent-execution-adapter.service.spec.ts`, `agent-runtime.service.spec.ts`, `response-composer.service.spec.ts`, `supervisor-agent.service.spec.ts`, `ui-language.spec.ts`, `control-tower-trace-page.spec.tsx`. |
+| Единый branch-state plane + replay | [x] | `BranchStatePlaneService`, `execution-surface-runtime.ts` (`advanceRunnableRootsToRunning`, `finalizeSurfaceFromExecution`, `propagateCancelledForBlockedDependencies`), FSM `PLANNED→CANCELLED`; тесты: `execution-surface-runtime.spec.ts`, `execution-branch-lifecycle.spec.ts`, `planner-thread-continuity.spec.ts`, `branch-state-plane.persistence.spec.ts`, `runtime-spine.integration.spec.ts`. Связка **replay ↔ plane** слабая — см. Track 3. |
+| Trust taxonomy → target contract | [x] | `execution-target-state.bridge.ts`, `branch-verdict-rules.ts`, wiring в `TruthfulnessEngineService` / `ResponseComposerService`; спеки: `execution-target-state.bridge.spec.ts`, `branch-verdict-rules.spec.ts`, `supervisor-agent.service.spec.ts`, `response-composer.service.spec.ts`. |
+| Execution surface в UI sense | [x] | Backend `executionSurface`/`executionExplainability`, chat store/panel approve-resume path, `rai-chat-thread-response-smoke`, `ai-chat-store.spec.ts`, `control-tower-trace-page.spec.tsx`, `control-tower-page.spec.tsx`, `lint:ui-language`. Repo-side acceptance packet заменяет отдельный ручной visual sign-off. |
+| Governance / control tower × multi-intent | [x] | `plannerBranchTelemetry`, `metadata.controlTowerPlannerEnvelope`, `metadata.controlTowerSubIntentGraphSnapshot`, explainability timeline/forensics service, Control Tower web pages и ops/runbook контур `Phase D/E`. Live telemetry и divergence path больше не эмитят `legacyClassification` / `legacyRouteKey`; эти поля сохранены только как historical-read fallback. Гейты и тесты: `gate:api:control-tower-planner-envelope`, `explainability-panel.service.spec.ts`, `control-tower-*.spec.tsx`, `runtime-spine.integration.spec.ts`, `supervisor-agent.service.spec.ts`. |
+| Model strategy после runtime proof | [x] | `eval/model-routing.regression.eval.spec.ts`; baseline gate `eval/model-routing.baseline.ts` + `model-routing.baseline.spec.ts`, `pnpm gate:api:model-routing-baseline` (p95 локального `buildPlan`+`topo`, proxy cost = ветки+`dependsOn`); **реальные** LLM latency/tokens в CI — вне этого gate. |
 
-| Целевой компонент | Что уже есть | Главный разрыв | Чем закрывается |
-|---|---|---|---|
-| `SubIntentGraph` как first-class объект | `SemanticIngressFrame`, `CompositeWorkflowPlan`, intent contracts, limited composites | Нет общего graph-object для mixed-intent runtime | `Track 1` |
-| Planner-driven orchestration | `SupervisorAgent` и special-case composites | Нет общего `ExecutionPlan + BranchScheduler` для `parallel / sequential / blocking` | `Track 2` |
-| Строгие branch contracts | Сильная типизация runtime уже есть, но `AgentExecutionResult` всё ещё несёт `text` | Межагентный слой ещё не полностью `JSON-only` | `Track 0` и `Track 2` |
-| Governed branch state и replay | Есть pending actions, audit, trustfulness, partial execution state | Нет единого branch-state plane, который одинаково держит graph, verdicts, confirmations и replay | `Track 3` |
-| Trust/verdict canon | Есть `VERIFIED / PARTIAL / UNVERIFIED / CONFLICTED / REJECTED` и branch trust artifacts | Таксономия и runtime mapping ещё не сведены в единый target contract | `Track 0` и `Track 3` |
-| Execution surface | `workWindows`, clarification loop и richer outputs уже существуют | UI пока частично отражает специальные сценарии, а не общий planner-state | `Track 4` |
-| Production-managed multi-agent runtime | Есть governance, lifecycle, control tower, `Phase D` hardening path | Эти контуры ещё не увязаны с будущим multi-intent runtime как единый rollout path | `Track 5` |
-| Model strategy | Есть registry/config-driven LLM wiring и hybrid режимы | Модельная специализация ещё опережает planner/runtime maturity только локально | `Track 6` |
+---
 
-## 4. Реализационные треки
+## Track 0 — Contract convergence
 
-### Track 0 — Contract Convergence Over Current Runtime
+- [x] Типы `SubIntentGraph`, `ExecutionPlan`, `ExecutionSurfaceState`, `ExecutionBranchResult`, `MutationPacket`, `ConfirmationRequest`, `TargetPolicyDecision` в `apps/api/src/shared/rai-chat/`
+- [x] `ExecutionBranchLifecycle` + `MutationConfirmationState` + `applyExecutionBranchTransition` + `execution-branch-lifecycle.spec.ts`
+- [x] Bridge: `execution-target-state.bridge.ts` + `execution-target-state.bridge.spec.ts`
+- [x] `MutationPacket`: guard `isMutationPacketEligibleForApply` + `mutation-packet.guard.spec.ts`
+- [x] Единая taxonomy-таблица на shared-слое: `execution-branch-lifecycle.ts`, `execution-target-state.bridge.ts`, `branch-verdict-rules.ts`; parity/whitelist покрыты `execution-surface.dto.spec.ts`, `execution-branch-lifecycle.spec.ts`, `branch-verdict-rules.spec.ts`
+- [x] Миграция межагентного слоя на JSON-only без потери совместимости: runtime-контракт `AgentExecutionResult` больше не содержит `text`; structured summary живёт в `structuredOutput.summary` и резолвится в composer через `agent-execution-summary.ts`; live path больше не пишет historical execution/routing aliases в новые runtime/telemetry payload, а web/UI читает их только через alias-normalization fallback; спеки: `agent-execution-summary.spec.ts`, `agent-execution-adapter.service.spec.ts`, `agent-runtime.service.spec.ts`, `response-composer.service.spec.ts`, `supervisor-agent.service.spec.ts`, `semantic-router.service.spec.ts`, `semantic-ingress.service.spec.ts`, `explainability-panel.service.spec.ts`, `ui-language.spec.ts`
+- [x] Регрессия: supervisor / semantic-ingress specs в CI (как часть `pnpm`/workflow репозитория)
 
-Цель:
-- ввести канонический `target-state` язык без слома текущего runtime.
+---
 
-Что входит:
-- унификация типов `SubIntentGraph`, `ExecutionPlan`, `ExecutionBranchResult`, `ExecutionSurfaceState`, `MutationPacket`, `ConfirmationRequest`, `PolicyDecision`;
-- bridge-layer между новыми контрактами и существующими `SemanticIngressFrame`, `CompositeWorkflowPlan`, branch trust types, pending actions;
-- единая taxonomy mapping-таблица для `branch status`, `trust verdict`, `mutation risk`, `confirmation state`;
-- стратегия миграции от частично текстовых agent results к структурированным branch payload.
+## Track 1 — TechMap-centered SubIntentGraph
 
-Definition of Done:
-- shared-контракты живут в коде и используются без ломки текущего `SupervisorAgent` пути;
-- новые типы не спорят с активными `Phase B` и `Stage 2` канонами;
-- появляется явный compatibility-layer, а не скрытая вторая схема данных.
+- [x] `buildSubIntentGraphFromSemanticFrame` + вызов из `SemanticIngressService.buildFrame`
+- [x] Классы веток в builder: informational / analytical / read_action / cross_domain / tech_map_core
+- [x] Сценарий `context → TechMap → execution → deviation → result` как **один** связный snapshot: `runtime/tech-map-loop-state-object.integration.spec.ts` (describe = имя сценария), фикстура `eval/tech-map-rebuild-draft-ingress.params.ts`; в snapshot входят `SemanticIngressFrame` (TechMap), `ExecutionPlan`, `initialSurface`, топопорядок, `deviationFollowUp` (hook по `seasonId`), ожидаемый артефакт. Дополнительно: узкий **HTTP** smoke `apps/api/test/a_rai-live-api-smoke.spec.ts` — resume `tech_map_draft` при `RAI_PLANNER_RUNTIME_ENABLED`, `executionSurface.branches`, audit `metadata.controlTowerPlannerEnvelope` + `plannerBranchTelemetry`. **Нет** полного HTTP e2e с вызовом deviation tool в одном запросе — вне этого чеклиста.
+- [x] Graph в trace/forensics как отдельное поле: полный ingress по-прежнему в `metadata.semanticIngressFrame`; компактный **graph-only** снимок — `metadata.controlTowerSubIntentGraphSnapshot` (`schemaVersion: control_tower.sub_intent_graph.v1`), `buildControlTowerSubIntentGraphSnapshotV1` в `control-tower-planner-envelope.ts`, wiring в `SupervisorForensicsService.writeAiAuditEntry`; тесты: `control-tower-planner-envelope.spec.ts`, `supervisor-agent.service.spec.ts`, HTTP smoke `a_rai-live-api-smoke.spec.ts` (planner block).
+- [x] Тесты: `sub-intent-graph.builder.spec.ts`, `eval/sub-intent-graph.eval.spec.ts`
+- [x] Anti-tunnel: `validateSubIntentGraphAntiTunnel` в `buildFrame` + `sub-intent-graph.mixed-intent-invariants.spec.ts`, builder/eval, `semantic-ingress.service.spec.ts`
 
-Стратегическая привязка:
-- это foundation-пакет для `Phase B`, но не рестарт платформы с нуля.
+---
 
-### Track 1 — TechMap-Centered Sub-Intent Graph
+## Track 2 — Planner-driven runtime
 
-Цель:
-- сделать `SubIntentGraph` первым реальным объектом исполнения для ядрового TechMap-loop.
+- [x] `BranchSchedulerService`: `buildExecutionPlanFromIngress`, `resolveStrategy`, `computeTopologicalScheduleOrder`, `buildInitialSurface` + `branch-scheduler.service.spec.ts`
+- [x] `SupervisorAgent` + `RAI_PLANNER_RUNTIME_ENABLED` + `supervisor-agent.service.spec.ts`
+- [x] `execution-surface-runtime.ts` + `execution-surface-runtime.spec.ts` (в т.ч. `isPlannerSliceFullyTerminal`, propagate cancel)
+- [x] `planner-thread-continuity.spec.ts`, `branch-state-plane.persistence.spec.ts`, supervisor planner-блок
+- [x] Продолжение плана между сообщениями: `continueSameGraph`, `advanceRunnableRootsToRunning`, `recordThreadPlannerSlice` / `getThreadPlannerSlice`; **тесты:** `planner-thread-continuity.spec.ts`, `runtime-spine.integration.spec.ts` (sequential 4-tick, cap+второй тик). Carry-forward модель сохранена: текущий тик исполняет только те ветки, которые уже были `RUNNING` на его старте.
+- [x] Non-composite multi-branch runtime: `executePlannerBranchesForTick` в `SupervisorAgent` исполняет `RUNNING` ветки branch-by-branch с отдельным `executeAgent`, нормализует per-branch `toolCalls`, агрегирует `branchResults` / `branchTrustAssessments` / `branchCompositions` и не схлопывает multi-explicit путь обратно в один пакетный runtime-вызов. **Тесты:** `supervisor-agent.service.spec.ts`, `runtime-spine.integration.spec.ts`.
+- [x] TechMap planner-loop: `executePlannerBranchesForTick` теперь принимает `tech_map_core + tech_map_clarify`, сохраняет базовый `structuredOutput` core-ветки для `applyTechMapWorkflowFrame`, а `tool-less` clarify branch переводит виртуально через surface (`COMPLETED` или `RUNNING` при открытом `clarifyBatch`). **Тесты:** `supervisor-agent.service.spec.ts`, `runtime-spine.integration.spec.ts`.
+- [x] `blocking_on_confirmation` / `mixed`: runtime-cycle `BLOCKED_ON_CONFIRMATION -> APPROVED_FINAL -> resume -> carry-forward next branch` подтверждён в `runtime-spine.integration.spec.ts`; чисто `tool-less` RUNNING ветки больше не отбрасываются (`supervisor-agent.service.spec.ts`); approve/resume path доведён до chat/web store
+- [x] Composite: stage-driven generic executor в `SupervisorAgent` + `payloadBindings` / `resolveCompositeStagePayload` / `finalizeNamedBranchFromExecution`; CRM и agro→finance не держатся на workflow-specific ветвлениях, а supported planner contours закрыты одним runtime-loop
+- [x] Интеграция planner в spine: `runtime-spine.integration.spec.ts` — sequential multi-tick (4× `executeAgent`); multi-explicit (2 ветки, snake_case id, branch-driven per tick); concurrency cap (deferral); второй тик при cap=1 (carry-forward, 2× `executeAgent` по двум тикам). Multi-explicit больше не зафиксирован как один primary runtime-call на сообщение.
 
-Что входит:
-- graph builder поверх `SemanticIngressService`;
-- декомпозиция запросов классов `informational`, `analytical`, `read + action`, `cross-domain`, `confirmation-gated`;
-- first-wave поддержка сценария `context -> TechMap -> execution -> deviation -> result`;
-- сохранение graph в state-plane и выдача inspectable trace для разработчика и explainability-core.
+---
 
-Definition of Done:
-- mixed-intent запросы перестают туннелироваться в одну owner-ветку;
-- graph строится минимум для канонических TechMap-centered сценариев;
-- graph можно увидеть, восстановить и использовать дальше в planner-runtime.
+## Track 3 — Governed trust, state, mutation closure
 
-Стратегическая привязка:
-- это прямое продолжение `Phase B1/B2`, а не отдельный абстрактный AI-эксперимент.
+- [x] `BranchStatePlaneService` (in-memory snapshot по `traceId`) + использование в supervisor
+- [x] Персистенция среза: `rai_planner_thread_states`, `RAI_PLANNER_THREAD_PERSIST`, `branch-state-plane.persistence.spec.ts`; ошибки БД → лог, in-memory фолбэк
+- [x] `PENDING` / resume: `pendingActionId` на поверхности, `APPROVED_FINAL` gate, planner resume payload в API, chat/web store approve-only continuation; тесты: `runtime-spine.integration.spec.ts`, `pending-action.service.spec.ts`, `ai-chat-store.spec.ts`
+- [x] `MutationPacket` guard + spec
+- [x] `executionExplainability` в `RaiChatResponseDto` + `execution-surface-projection.spec.ts`
+- [x] Replay: `replayMode` + registry + `BranchStatePlaneService` snapshot/persistence; live write-path при этом не дублирует `legacyClassification` / `legacyRouteKey` в новые planner/telemetry события, а historical-read fallback сохранён в explainability и shared types; тесты: `replay-resume.integration.spec.ts`, `branch-state-plane.persistence.spec.ts`, `planner-thread-continuity.spec.ts`, `explainability-panel.service.spec.ts`
 
-### Track 2 — Planner-Driven Runtime On Top Of Supervisor
+---
 
-Цель:
-- дорастить `SupervisorAgent` до planner-driven оркестрации без разрыва текущего spine.
+## Track 4 — Phase C consumption
 
-Что входит:
-- `ExecutionPlan` поверх `SubIntentGraph`;
-- `BranchScheduler` с режимами `sequential`, `parallel`, `blocking_on_confirmation`, `mixed`;
-- запуск read-only mixed flows сначала на ограниченном core-срезе;
-- перенос composite special-cases в общий planner-path;
-- постепенный переход от role-owned prose к structured branch payload с финальной композицией только на уровне orchestrator.
+- [x] `executionSurface` / `workWindows` / `ResponseComposer` + projection spec
+- [x] `executionExplainability` в DTO + whitelist `execution-surface.dto.spec.ts`
+- [x] POST `/rai/chat`: whitelist + `rai-chat.request-body.validation.spec.ts`; паритет `ClarificationResumeCollectedContextDto` с `buildResumeExecutionPlan` (в т.ч. `batchId`/`itemId`/`uom`/`qty` для fulfillment resume) + live smoke `a_rai-live-api-smoke.spec.ts`
+- [x] Web smoke: `apps/web/__tests__/rai-chat-thread-response-smoke.spec.ts` + `pnpm gate:web:rai-chat-smoke` в `package.json` / workflow
+- [x] `pnpm lint:ui-language` + `apps/web/__tests__/ui-language.spec.ts` + CI. Полный визуальный обход UI — **вне** репо.
 
-Definition of Done:
-- хотя бы часть mixed-intent core-flow реально исполняется по плану, а не через hardcoded sequence;
-- blocking-ветки корректно ждут confirmation и возобновляются;
-- orchestration decisions трассируются как first-class runtime artifacts;
-- новый planner-path доказан таргетированными eval/spec, прежде чем менять default runtime mode.
+---
 
-Стратегическая привязка:
-- это ядро незакрытого разрыва между текущим `tool-first/hybrid` состоянием и идеальным каноном.
+## Track 5 — Governance, lifecycle, production
 
-### Track 3 — Governed Trust, State And Mutation Closure
+- [x] `plannerBranchTelemetry` + `buildBranchPlannerTelemetrySnapshot` + `branch-runtime-telemetry.spec.ts`
+- [x] `runtime-governance-policy.service.spec.ts` (planner + branch slice)
+- [x] Branch concurrency: `advanceRunnableRootsToRunning`, `plannerAdvanceMeta`, `executionExplainability.concurrencyDeferral` + `policyDecision: branch_concurrency_cap`; audit deferral через telemetry snapshot (`plannerConcurrencyDeferredBranchIds` / `plannerConcurrencyCap`); интеграция: `runtime-spine.integration.spec.ts` (cap e2e)
+- [x] Canary / rollback для promote planner-path: `planner-promotion-policy.ts` (`resolvePlannerRuntimePathEnabled`); env `RAI_PLANNER_ROLLBACK` (kill-switch), `RAI_PLANNER_CANARY_COMPANY_IDS` (allowlist), `RAI_PLANNER_CANARY_PERCENT` (детерминированный bucket по `companyId`); wiring в `SupervisorAgent` + `plannerPromotion` в `plannerBranchTelemetry`; гейт `pnpm gate:api:planner-promotion-policy`. **Нет** отдельного UI/ops-playbook «promote wave» в репо.
+- [x] Control tower: stable audit-contract `buildControlTowerPlannerEnvelopeV1` + graph snapshot + explainability timeline/forensics + Control Tower web pages + repo-side rollout/runbook packet (`PHASE_D_IMPLEMENTATION_PLAN.md`, `PHASE_E_IMPLEMENTATION_PLAN.md`, `RELEASE_BACKUP_RESTORE_AND_DR_RUNBOOK.md`). Отдельный внешний bus не требуется для repo-side closeout
 
-Цель:
-- замкнуть branch-level state, policy, trust и replay в один честный execution contour.
+---
 
-Что входит:
-- branch-state store для graph, statuses, confirmation state, mutation state и trust artifacts;
-- единый `MutationPacket` поверх уже существующего governed write-path;
-- mapping current trust taxonomy к target-state contract без потери детализации;
-- recovery/replay/resume для confirmation-gated и multi-step сценариев;
-- explainability как structured artifact, а не только как prose.
+## Track 6 — Model specialization
 
-Definition of Done:
-- любая ветка имеет восстанавливаемый статус, verdict и след policy-решений;
-- write-actions не обходят governed path и не теряют rollback/evidence metadata;
-- explainability/evidence встроены в core-flow до начала UI-polish.
+- [x] `eval/model-routing.regression.eval.spec.ts`
+- [x] Явные пороги baseline (latency p95, structural cost proxy) с падением CI: `model-routing.baseline.ts`, `model-routing.baseline.spec.ts`, фикстура `model-routing.fixtures.ts`, гейт `pnpm gate:api:model-routing-baseline`; порог p95: env `RAI_MODEL_ROUTING_BASELINE_P95_MS_MAX` (default 300 ms). Пороги **по факту вызовов LLM** — не этот артефакт.
+- [x] Стабильность `BranchVerdict` без сети: `branch-verdict-rules.ts` (агрегация recommended/overall из учёта truthfulness) + `branch-verdict-rules.spec.ts`; wiring в `TruthfulnessEngineService` / `ResponseComposerService`; гейт `pnpm gate:api:branch-verdict-rules` (`jest --runInBand`, без LLM). Полноразмерный «корпус» под eval — вне этого пункта.
 
-Стратегическая привязка:
-- это закрывает `Phase B4` и удерживает правило: explainability-core раньше user-facing оболочки.
+---
 
-### Track 4 — Execution Surface Consumption In Phase C
+## Первый delivery-пакет (§6 blueprint) — чеклист
 
-Цель:
-- сделать `Phase C` слоем потребления уже собранного execution-state, а не местом, где придумывается логика оркестрации.
+- [x] (1) Shared contracts в `apps/api/src/shared/rai-chat`
+- [x] (2) Graph builder в semantic ingress (first-wave)
+- [x] (3) `ExecutionPlan` + planner-path в supervisor (под флагом) + интеграционные тесты spine
+- [x] (4) Branch state / trust / mutation в supervisor + composer; персистенция среза, pending-action UX и approve/resume continuation подтверждены runtime/web тестами
 
-Что входит:
-- проекция planner-state в `workWindows`, pending confirmations, mutation feedback и branch disclosures;
-- стабилизация пути `thread -> message -> response` для governed web-chat;
-- пользовательская визуализация branch state, evidence и continuation points;
-- сохранение жёсткой границы: UI не определяет runtime truth, а читает её.
+---
 
-Definition of Done:
-- `Phase C` отражает реальный execution-state ядра;
-- пользователь видит не только финальный prose, но и управляемый progress веток;
-- ни один critical runtime invariant не живёт только в frontend.
+## Критерии сближения с идеалом (§7) — чеклист
 
-Стратегическая привязка:
-- этот трек полностью соответствует границе `Phase C`, заданной в `PHASE_B_IMPLEMENTATION_PLAN.md` и `PHASE_C_NEW_CHAT_MEMO.md`.
+- [x] (1) Mixed-intent → несколько веток: `subIntentGraph` + anti-tunnel для фикстур (TechMap+clarify, composite parity, multi-explicit); прочие multi-intent **вне** инвариантов — осознанно.
+- [x] (2) `sequential / parallel / blocking / mixed` без stitched hardcode в прод-пути — supported runtime contours закрыты planner-first loop, включая `TechMap`, composite, governed resume и чисто `tool-less` running branches
+- [x] (3) Структурированные контракты + prose на оркестраторе — runtime опирается на structured-core; prose остаётся только как optional summary и финальный user-facing composition
+- [x] (4) Governed write-path для мутаций — код + registry/policy путь
+- [x] (5) Branch state между сообщениями и при персистенции — `BranchStatePlaneService`, thread persistence, replay/resume snapshots и planner continuity подтверждены тестами
+- [x] (6) Explainability как structured core по целевому контуру — `executionExplainability`, branch trust artifacts, planner telemetry, explainability timeline и trace forensics используют structured runtime artifacts
+- [x] (7) Phase C из ядра: chat/web surface, approve/resume UX, control-tower trace/dashboard smoke и execution closeout packet подтверждают repo-side consumption без отдельного manual blocker
+- [x] (8) Rollout / canary / rollback / control tower × multi-intent — planner promotion policy, kill-switch/canary, control-tower surface, explainability timeline и ops/runbook packet в репо закрывают target-контур для repo-side acceptance
 
-### Track 5 — Runtime Governance, Lifecycle And Production Hardening
+---
 
-Цель:
-- связать будущий multi-intent runtime с уже активными контурами ownership, lifecycle, control tower и pilot-hardening.
+## Привязка к фазам (кратко)
 
-Что входит:
-- увязка planner-runtime с `RAI_AGENT_DOMAIN_OWNERSHIP_MAP.md`;
-- budgets, concurrency, escalation и reliability policies на уровне branch execution;
-- canary/promote/rollback path для planner/runtime изменений;
-- operator-plane telemetry и control-tower visibility по новым branch artifacts;
-- привязка `Phase D` и последующих rollout-контуров к real multi-agent behavior, а не только к инфраструктуре.
+| Фаза | Треки |
+|------|--------|
+| Phase B | 0–3 |
+| Phase C | 4 |
+| Phase D / E | 5 (ops) |
+| После доказательства runtime | 6 |
 
-Definition of Done:
-- новый runtime меняется только через governed rollout path;
-- control tower и lifecycle board видят planner/runtime-состояние как first-class operational signals;
-- self-host/pilot контур готов валидировать не только shell, но и честную multi-intent оркестрацию.
+---
 
-Стратегическая привязка:
-- этот трек удерживает связность `Stage 2`, `One Big Phase`, lifecycle и operator-plane, чтобы target-state не оторвался от production reality.
+## Execution Reference
 
-### Track 6 — Model Specialization Only After Runtime Proof
+Repo-side closeout по состоянию на `2026-04-04` зафиксирован отдельно в:
 
-Цель:
-- оптимизировать модельный слой только после того, как planner, state, governance и evals уже работают как система.
+- [AGENT_TARGET_BLUEPRINT_IMPLEMENTATION_SLICE_CLOSEOUT_2026-04-04.md](/root/RAI_EP/docs/07_EXECUTION/AGENT_TARGET_BLUEPRINT_IMPLEMENTATION_SLICE_CLOSEOUT_2026-04-04.md)
 
-Что входит:
-- orchestrator model strategy;
-- cost-aware routing;
-- domain specialization там, где уже есть доказанный runtime benefit;
-- latency/cost optimization без ломки correctness.
+Именно execution-документ отвечает на вопросы:
 
-Definition of Done:
-- model changes сравниваются по eval, trustfulness stability, latency и cost;
-- выбор модели перестаёт компенсировать архитектурные дыры planner/state plane.
+- чем именно подтверждено полное repo-side закрытие bridge;
+- какие acceptance артефакты и runbook-пакеты составляют финальное evidence packet;
+- где проходит граница между repo-side closeout и внешним production rollout.
 
-Стратегическая привязка:
-- этот трек всегда идёт последним и не подменяет собой `Track 1–5`.
+## Управленческое правило (сохранено)
 
-## 5. Прямая привязка к активным execution-фазам
-
-| Активная фаза | Что из blueprint относится к фазе | Что не должно в неё просачиваться |
-|---|---|---|
-| `Phase B` | `Track 0`, `Track 1`, `Track 2`, `Track 3` | `web`-breadth, installability, pilot hardening |
-| `Phase C` | `Track 4` | изобретение core-логики на стороне UI |
-| `Phase D` | ops/pilot часть `Track 5` | расширение продуктовой ширины вместо hardening |
-| `Phase E` | managed deployment/governance continuation для `Track 5` | ранняя модельная гонка без operational proof |
-
-Правило:
-
-- если задача нужна, чтобы замкнуть `TechMap -> execution -> deviation -> result` loop и planner/state core, это `Phase B`;
-- если задача нужна, чтобы показать это состояние в `web`, это `Phase C`;
-- если задача нужна для installability, recovery, support и pilot, это `Phase D`.
-
-## 6. Немедленный первый delivery-пакет
-
-Первая практическая пачка не должна быть абстрактной. Она должна включать:
-
-1. shared target-state contracts в `apps/api/src/shared/rai-chat`;
-2. graph builder внутри `SemanticIngressService` с first-wave TechMap-centered покрытием;
-3. `ExecutionPlan` и planner-path внутри `SupervisorAgent`;
-4. branch state/trust/mutation mapping в `SupervisorAgent`, `ResponseComposer` и persistence/runtime слоях.
-
-Ожидаемый эффект:
-
-- текущий runtime остаётся рабочим;
-- появляется первый честный `SubIntentGraph -> ExecutionPlan -> branch state` slice;
-- специальные composite-сценарии получают путь миграции в общий target runtime.
-
-## 7. Критерии сближения с идеальным каноном
-
-Система может считаться реально движущейся к идеалу только если одновременно выполняются условия:
-
-1. свободный mixed-intent запрос декомпозируется в несколько веток как first-class runtime object;
-2. ветки исполняются в режимах `sequential / parallel / blocking / mixed` без hardcoded stitched flow;
-3. межагентный слой опирается на структурированные контракты, а финальный prose собирается оркестратором;
-4. governed write-path остаётся единственным путём мутаций и подтверждений;
-5. branch state переживает confirmation wait, retry и restart;
-6. explainability/evidence являются structured core-layer, а не декоративным текстом;
-7. `Phase C` показывает execution-state, а не имитирует его;
-8. runtime rollout, canary, rollback и pilot path встроены в lifecycle/control tower контур.
-
-## 8. Финальное управленческое правило
-
-Правильный путь к идеальной агентной системе RAI_EP выглядит так:
-
-- не расширять хаотично число ролей;
-- не переписывать работающий spine ради абстрактной “чистоты”;
-- не путать `UI surface` с ядром оркестрации;
-- не выносить governance, lifecycle и pilot в необязательный хвост;
-- доращивать текущий runtime до `SubIntentGraph -> ExecutionPlan -> governed branch state -> execution surface` по шагам, согласованным с `master-plan` и `Phase B/C/D`.
-
-Именно в этой роли данный blueprint и должен использоваться: как документ закрытия разрыва между текущим кодом и идеальным каноном, а не как параллельный манифест или как программа повторного старта `Stage 2`.
+- Не раздувать роли хаотично; не переписывать spine ради «чистоты»; не путать UI с ядром; governance и pilot не в хвост.
+- Целевая цепочка: `SubIntentGraph → ExecutionPlan → governed branch state → execution surface` — наращивать по шагам согласно master-plan и Phase B/C/D.

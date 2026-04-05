@@ -3,13 +3,13 @@ id: DOC-STR-STAGE-2-INDEX-1HGQ
 layer: Strategy
 type: Navigation
 status: draft
-version: 0.2.0
+version: 0.3.0
 owners: [@techlead]
-last_updated: 2026-04-03
+last_updated: 2026-04-05
 claim_id: CLAIM-STR-STAGE2-INDEX
 claim_status: asserted
 verified_by: manual
-last_verified: 2026-04-03
+last_verified: 2026-04-05
 evidence_refs: docs/00_STRATEGY/README.md;docs/00_STRATEGY/STAGE 2/RAI_AGENT_PLATFORM_AND_AI_MASTER_PLAN.md;docs/00_STRATEGY/STAGE 2/rai_ep_agent_system_target_implementation_blueprint.md;docs/00_STRATEGY/STAGE 2/rai_ep_agent_system_ideal_canon.md;docs/11_INSTRUCTIONS/INDEX.md
 ---
 # STAGE 2 — Canon Index
@@ -18,7 +18,7 @@ evidence_refs: docs/00_STRATEGY/README.md;docs/00_STRATEGY/STAGE 2/RAI_AGENT_PLA
 id: CLAIM-STR-STAGE2-INDEX
 status: asserted
 verified_by: manual
-last_verified: 2026-04-03
+last_verified: 2026-04-05
 
 Этот документ является действующим индексом слоя `Stage 2` и определяет обязательный порядок чтения активного канона по агентной платформе. Он управляет навигацией по живым стратегическим документам, но не подменяет проверку runtime по `code/tests/gates`.
 
@@ -40,8 +40,8 @@ last_verified: 2026-04-03
 
 | Документ | Статус | Роль |
 |----------|--------|------|
-| [rai_ep_agent_system_target_implementation_blueprint.md](./rai_ep_agent_system_target_implementation_blueprint.md) | `ACTIVE BRIDGE` | Bridge-документ `current state -> gaps -> target state`; переводит `master-plan`, кодовый baseline и `Phase B/C/D` в согласованный маршрут до target-state |
-| [rai_ep_agent_system_ideal_canon.md](./rai_ep_agent_system_ideal_canon.md) | `IDEAL REFERENCE` | North-star канон целевой агентной системы; использовать как reference для target-state, а не как подтверждённую runtime truth |
+| [rai_ep_agent_system_target_implementation_blueprint.md](./rai_ep_agent_system_target_implementation_blueprint.md) | `ACTIVE BRIDGE` | Bridge-документ `current state -> gaps -> target state`; по состоянию на `2026-04-05` его repo-side target-gap закрыт кодом, тестами, operator-plane и execution/runbook packet, а ideal-alignment addendum зафиксирован в [AGENT_TARGET_BLUEPRINT_IMPLEMENTATION_SLICE_CLOSEOUT_2026-04-04.md](/root/RAI_EP/docs/07_EXECUTION/AGENT_TARGET_BLUEPRINT_IMPLEMENTATION_SLICE_CLOSEOUT_2026-04-04.md) |
+| [rai_ep_agent_system_ideal_canon.md](./rai_ep_agent_system_ideal_canon.md) | `IDEAL REFERENCE` | North-star канон целевой агентной системы; использовать как reference для target-state. Repo существенно приблизился к нему, но фактическое совпадение подтверждается только code/tests/gates и execution evidence |
 
 ---
 

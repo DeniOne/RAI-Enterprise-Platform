@@ -7,6 +7,7 @@ import { RaiChatWidget, RaiChatWidgetType } from '../ai-chat-widgets';
 import { submitRaiChatRequest } from '../api';
 import type {
     RaiChatClarificationResumeDto,
+    RaiChatResponseDto,
 } from '../api';
 import {
     AiSignalItem,
@@ -23,6 +24,24 @@ import {
     resolveRaiChatResponseState,
 } from '../rai-chat-response-state';
 import type { ChatTrustSummary } from '../rai-chat-response-adapter';
+
+export type PlannerMutationResumeState = { pendingActionId: string };
+
+function pickPlannerBlockedPendingActionId(
+    explainability: RaiChatResponseDto['executionExplainability'],
+): string | null {
+    if (!explainability?.branches?.length) {
+        return null;
+    }
+    const row = explainability.branches.find(
+        (b) =>
+            b.lifecycle === 'BLOCKED_ON_CONFIRMATION'
+            && b.mutationState === 'PENDING'
+            && typeof b.pendingActionId === 'string'
+            && b.pendingActionId.length > 0,
+    );
+    return row?.pendingActionId ?? null;
+}
 
 function getChatRuntimeErrorMessage(error: unknown): string {
     if (!(error instanceof Error)) {
@@ -109,6 +128,7 @@ export interface ChatSessionState {
     activeWindowId: string | null;
     collapsedWindowIds: string[];
     pendingClarification: PendingClarificationState | null;
+    plannerMutationResume: PlannerMutationResumeState | null;
 }
 
 interface AiChatStore {
@@ -129,6 +149,7 @@ interface AiChatStore {
     activeWindowId: string | null;
     collapsedWindowIds: string[];
     pendingClarification: PendingClarificationState | null;
+    plannerMutationResume: PlannerMutationResumeState | null;
     resumeInFlight: boolean;
     isLoading: boolean;
     abortController: AbortController | null;
@@ -178,6 +199,7 @@ interface AiChatStore {
     }) => Promise<void>;
     abortRequest: () => void;
     clearHistory: () => void;
+    dismissPlannerMutationResume: () => void;
 }
 
 const generateId = () => Math.random().toString(36).substring(2, 9);
@@ -195,6 +217,7 @@ function createEmptySession(sessionId = `chat-${generateId()}`): ChatSessionStat
         activeWindowId: null,
         collapsedWindowIds: [],
         pendingClarification: null,
+        plannerMutationResume: null,
     };
 }
 
@@ -216,6 +239,7 @@ function loadSessionIntoLiveState(session: ChatSessionState) {
         activeWindowId: session.activeWindowId,
         collapsedWindowIds: session.collapsedWindowIds,
         pendingClarification: session.pendingClarification,
+        plannerMutationResume: session.plannerMutationResume,
         resumeInFlight: false,
         isLoading: false,
         abortController: null,
@@ -223,7 +247,7 @@ function loadSessionIntoLiveState(session: ChatSessionState) {
 }
 
 function syncActiveSessionRecord(
-    state: Pick<AiChatStore, 'activeSessionId' | 'sessions' | 'threadId' | 'messages' | 'signals' | 'workWindows' | 'activeWindowId' | 'collapsedWindowIds' | 'pendingClarification'>,
+    state: Pick<AiChatStore, 'activeSessionId' | 'sessions' | 'threadId' | 'messages' | 'signals' | 'workWindows' | 'activeWindowId' | 'collapsedWindowIds' | 'pendingClarification' | 'plannerMutationResume'>,
 ): ChatSessionState[] {
     const sessionId = state.activeSessionId ?? `chat-${generateId()}`;
     const nextSession: ChatSessionState = {
@@ -237,6 +261,7 @@ function syncActiveSessionRecord(
         activeWindowId: state.activeWindowId,
         collapsedWindowIds: state.collapsedWindowIds,
         pendingClarification: state.pendingClarification,
+        plannerMutationResume: state.plannerMutationResume,
     };
 
     return [
@@ -265,6 +290,7 @@ export const useAiChatStore = create<AiChatStore>()(
             activeWindowId: null,
             collapsedWindowIds: [],
             pendingClarification: null,
+            plannerMutationResume: null,
             resumeInFlight: false,
 
             isLoading: false,
@@ -471,6 +497,15 @@ export const useAiChatStore = create<AiChatStore>()(
                 };
             }),
 
+            dismissPlannerMutationResume: () =>
+                set((state) => ({
+                    plannerMutationResume: null,
+                    sessions: syncActiveSessionRecord({
+                        ...state,
+                        plannerMutationResume: null,
+                    }),
+                })),
+
             sendMessage: async (text: string) => {
                 const { threadId, fsmState } = get();
                 if (fsmState !== 'open') return;
@@ -600,6 +635,15 @@ export const useAiChatStore = create<AiChatStore>()(
                 clarificationResume,
             }) => {
                 const workspaceContext = useWorkspaceContextStore.getState().context;
+                const resume = get().plannerMutationResume;
+                const effectiveThreadId = threadId ?? get().threadId;
+                const plannerResumePayload =
+                    resume && effectiveThreadId
+                        ? {
+                            executionPlannerMutationApproved: true as const,
+                            executionPlannerApprovedPendingActionId: resume.pendingActionId,
+                        }
+                        : {};
                 const data = await submitRaiChatRequest({
                     threadId,
                     message,
@@ -607,6 +651,7 @@ export const useAiChatStore = create<AiChatStore>()(
                     originMessageId,
                     clarificationResume: clarificationResume as RaiChatClarificationResumeDto | undefined,
                     signal,
+                    ...plannerResumePayload,
                 });
                 const fallbackOriginMessageId = clarificationResume
                     ? get().workWindows.find((currentWindow) => currentWindow.windowId === clarificationResume.windowId)?.originMessageId ?? null
@@ -651,6 +696,8 @@ export const useAiChatStore = create<AiChatStore>()(
                             : state.pendingClarification?.originalUserMessage ?? message,
                         workWindows: resolvedResponseState.workWindows,
                     });
+                    const nextPid = pickPlannerBlockedPendingActionId(data.executionExplainability);
+                    const nextPlannerResume = nextPid ? { pendingActionId: nextPid } : null;
 
                     return {
                         messages: nextMessages,
@@ -662,6 +709,7 @@ export const useAiChatStore = create<AiChatStore>()(
                         collapsedWindowIds: resolvedResponseState.collapsedWindowIds,
                         signals: resolvedResponseState.signals,
                         pendingClarification: nextPendingClarification,
+                        plannerMutationResume: nextPlannerResume,
                         resumeInFlight: false,
                         sessions: syncActiveSessionRecord({
                             ...state,
@@ -672,6 +720,7 @@ export const useAiChatStore = create<AiChatStore>()(
                             collapsedWindowIds: resolvedResponseState.collapsedWindowIds,
                             signals: resolvedResponseState.signals,
                             pendingClarification: nextPendingClarification,
+                            plannerMutationResume: nextPlannerResume,
                         }),
                     };
                 });
@@ -812,12 +861,20 @@ export const useAiChatStore = create<AiChatStore>()(
                 activeWindowId: state.activeWindowId,
                 collapsedWindowIds: state.collapsedWindowIds,
                 pendingClarification: state.pendingClarification,
+                plannerMutationResume: state.plannerMutationResume,
             }),
             onRehydrateStorage: () => (state) => {
                 if (state) {
                     if (!Array.isArray(state.sessions) || state.sessions.length === 0) {
                         state.sessions = [createEmptySession('chat-default')];
                         state.activeSessionId = 'chat-default';
+                    }
+                    state.sessions = state.sessions.map((session) => ({
+                        ...session,
+                        plannerMutationResume: session.plannerMutationResume ?? null,
+                    }));
+                    if (state.plannerMutationResume === undefined) {
+                        state.plannerMutationResume = null;
                     }
                     state.fsmState = 'closed';
                     state.isLoading = false;

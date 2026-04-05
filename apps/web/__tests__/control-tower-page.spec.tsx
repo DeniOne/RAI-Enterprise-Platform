@@ -287,7 +287,7 @@ describe('ControlTowerPage queue visibility', () => {
     expect(screen.getByText('свежий')).toBeInTheDocument();
     expect(screen.getByText('runtime_active_tool_calls')).toBeInTheDocument();
     expect(screen.getByText(/посл\. 6 \/ пик 7/)).toBeInTheDocument();
-    expect(screen.getByText('Текущие расхождения legacy и semantic routing')).toBeInTheDocument();
+    expect(screen.getByText('Текущие расхождения наследованной и семантической маршрутизации')).toBeInTheDocument();
     expect(screen.getByText('Где шумит сильнее всего')).toBeInTheDocument();
     expect(screen.getByText('Повторяющиеся кластеры сбоев')).toBeInTheDocument();
     expect(screen.getByText('Кандидаты в память кейсов')).toBeInTheDocument();
@@ -300,8 +300,8 @@ describe('ControlTowerPage queue visibility', () => {
     expect(screen.getByText('Контур доверия веток')).toBeInTheDocument();
     expect(screen.getByText('Соблюдение бюджета')).toBeInTheDocument();
     expect(screen.getByText('100.0%')).toBeInTheDocument();
-    expect(screen.getByText('P95 trust-gate')).toBeInTheDocument();
-    expect(screen.getAllByText('240 ms').length).toBeGreaterThan(0);
+    expect(screen.getByText('P95 шлюза доверия')).toBeInTheDocument();
+    expect(screen.getAllByText(/240/).length).toBeGreaterThan(0);
     expect(memoryHealthMock).toHaveBeenCalled();
   });
 

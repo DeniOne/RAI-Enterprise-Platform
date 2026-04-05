@@ -173,7 +173,7 @@ export interface RoutingDivergence {
   isMismatch: boolean;
   mismatchKinds: string[];
   summary: string;
-  legacyRouteKey: string;
+  baselineRouteKey?: string;
   semanticRouteKey: string;
 }
 
@@ -212,7 +212,7 @@ export interface RoutingTelemetryEvent {
   workspaceStateDigest: string;
   activeFlow: string | null;
   userQueryRedacted: string;
-  legacyClassification: IntentClassification;
+  baselineClassification?: IntentClassification;
   semanticIntent: SemanticIntent;
   routeDecision: RouteDecision;
   candidateRoutes: RoutingCandidate[];
@@ -253,7 +253,9 @@ export interface SemanticRoutingEvaluation {
   latencyMs: number;
   sliceId?: string | null;
   promotedPrimary: boolean;
-  executionPath: "semantic_router_shadow" | "semantic_router_primary";
+  executionPath:
+    | "semantic_route_shadow"
+    | "semantic_route_primary";
   requestedToolCalls: RaiToolCallDto[];
   classification: IntentClassification;
   routingContext: SemanticRoutingContext;
@@ -268,7 +270,7 @@ export interface SemanticRoutingRequest {
   workspaceContext?: WorkspaceContextDto;
   traceId: string;
   threadId: string;
-  legacyClassification: IntentClassification;
+  baselineClassification: IntentClassification;
   requestedToolCalls: RaiToolCallDto[];
   allowPrimaryPromotion?: boolean;
 }

@@ -51,6 +51,8 @@ import { RuntimeGovernanceFeatureFlagsService } from "./runtime-governance/runti
 import { RuntimeGovernancePolicyService } from "./runtime-governance/runtime-governance-policy.service";
 import { SemanticRouterService } from "./semantic-router/semantic-router.service";
 import { SemanticIngressService } from "./semantic-ingress.service";
+import { BranchSchedulerService } from "./planner/branch-scheduler.service";
+import { BranchStatePlaneService } from "./branch-state-plane.service";
 import {
   RAI_CHAT_WIDGETS_SCHEMA_VERSION,
   RaiChatWidgetType,
@@ -91,7 +93,15 @@ describe("SupervisorAgent", () => {
     harvestPlan: { findFirst: jest.fn() },
     agroEscalation: { findMany: jest.fn().mockResolvedValue([]) },
     aiAuditEntry: { create: jest.fn().mockResolvedValue({}) },
-    pendingAction: { create: jest.fn().mockResolvedValue({ id: "pa-1" }) },
+    pendingAction: {
+      create: jest.fn().mockResolvedValue({ id: "pa-1" }),
+      findFirst: jest.fn().mockResolvedValue({
+        id: "pa-1",
+        companyId: "company-1",
+        status: "APPROVED_FINAL",
+        expiresAt: new Date(Date.now() + 3_600_000),
+      }),
+    },
   };
   const intentRouterMock = {
     classify: jest.fn().mockReturnValue({
@@ -204,6 +214,15 @@ describe("SupervisorAgent", () => {
         },
       },
     }),
+    getTrustBudget: jest.fn().mockReturnValue({
+      maxTrackedBranches: 4,
+      maxCrossCheckBranches: 1,
+      latencyBudgetMs: {
+        happyPathMs: 300,
+        multiSourceReadMs: 800,
+        crossCheckTriggeredMs: 1_500,
+      },
+    }),
     resolveTrustLatencyBudgetMs: jest
       .fn()
       .mockImplementation((_role: string, profile: string) => {
@@ -271,7 +290,7 @@ describe("SupervisorAgent", () => {
       latencyMs: 5,
       sliceId: null,
       promotedPrimary: false,
-      executionPath: "semantic_router_shadow",
+      executionPath: "semantic_route_shadow",
       requestedToolCalls: input.requestedToolCalls ?? [],
       classification: input.legacyClassification,
       routingContext: {
@@ -370,6 +389,8 @@ describe("SupervisorAgent", () => {
         { provide: OpenRouterGatewayService, useValue: openRouterGatewayMock },
         { provide: SemanticRouterService, useValue: semanticRouterMock },
         SemanticIngressService,
+        BranchSchedulerService,
+        BranchStatePlaneService,
         { provide: AgentPromptAssemblyService, useValue: agentPromptAssemblyMock },
         { provide: TraceSummaryService, useValue: { record: jest.fn().mockResolvedValue(undefined), updateQuality: jest.fn().mockResolvedValue(undefined) } },
         { provide: AutonomyPolicyService, useValue: { getCompanyAutonomyLevel: jest.fn().mockResolvedValue("AUTONOMOUS") } },
@@ -516,7 +537,9 @@ describe("SupervisorAgent", () => {
       "user-2",
     );
 
-    expect(result.text).toContain("Я не совсем понял ваш запрос.");
+    expect(result.text).toContain(
+      "Недостаточно подтверждённых данных, чтобы выдать установленный факт.",
+    );
     expect(result.memoryUsed ?? []).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -770,7 +793,7 @@ describe("SupervisorAgent", () => {
     );
   });
 
-  it("превращает agronomist NEEDS_MORE_DATA в payload добора контекста для техкарты", async () => {
+  it("tech_map_draft как WRITE остаётся в governed pending-action path", async () => {
     process.env.RAI_AGENT_RUNTIME_MODE = "agent-first-hybrid";
     intentRouterMock.classify.mockReturnValueOnce({
       targetRole: "agronomist",
@@ -796,48 +819,30 @@ describe("SupervisorAgent", () => {
       "user-1",
     );
 
-    expect(result.text).toContain("Чтобы подготовить техкарту");
+    expect(result.text).toContain("ожидает подтверждения");
     expect(result.agentRole).toBe("agronomist");
-    expect(result.pendingClarification).toEqual(
-      expect.objectContaining({
-        kind: "missing_context",
-        intentId: "tech_map_draft",
-        autoResume: true,
-      }),
-    );
+    expect(result.pendingClarification).toBeUndefined();
     expect(result.workWindows).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          type: "context_acquisition",
-          parentWindowId: null,
-          relatedWindowIds: [expect.stringContaining("win-techmap-")],
-          category: "clarification",
-          priority: 85,
-          mode: "panel",
-          status: "needs_user_input",
-          payload: expect.objectContaining({
-            missingKeys: ["fieldRef", "seasonRef"],
-          }),
-        }),
-        expect.objectContaining({
-          type: "context_hint",
-          parentWindowId: expect.stringContaining("win-techmap-"),
-          relatedWindowIds: [expect.stringContaining("win-techmap-")],
+          type: "structured_result",
           category: "analysis",
-          priority: 40,
-          actions: expect.arrayContaining([
-            expect.objectContaining({
-              kind: "focus_window",
-              targetWindowId: expect.stringContaining("win-techmap-"),
-            }),
-          ]),
+          status: "informational",
+          payload: expect.objectContaining({
+            sections: expect.arrayContaining([
+              expect.objectContaining({
+                items: expect.arrayContaining([
+                  expect.objectContaining({ value: "BLOCKED_ON_CONFIRMATION" }),
+                ]),
+              }),
+            ]),
+          }),
         }),
       ]),
     );
-    expect(result.activeWindowId).toEqual(expect.stringContaining("win-techmap-"));
   });
 
-  it("отдаёт inline mode, если для техкарты не хватает только одного поля контекста", async () => {
+  it("для tech_map_draft governed path не строит inline clarification window до подтверждения", async () => {
     process.env.RAI_AGENT_RUNTIME_MODE = "agent-first-hybrid";
     intentRouterMock.classify.mockReturnValueOnce({
       targetRole: "agronomist",
@@ -869,33 +874,24 @@ describe("SupervisorAgent", () => {
     expect(result.workWindows).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          type: "context_acquisition",
-          parentWindowId: null,
-          category: "clarification",
-          priority: 95,
-          mode: "inline",
-          status: "needs_user_input",
-          payload: expect.objectContaining({
-            seasonRef: "season-2026",
-            missingKeys: ["fieldRef"],
-          }),
-        }),
-        expect.objectContaining({
-          type: "context_hint",
-          parentWindowId: expect.stringContaining("win-techmap-"),
-          mode: "inline",
+          type: "structured_result",
           category: "analysis",
-          actions: expect.arrayContaining([
-            expect.objectContaining({
-              kind: "focus_window",
-            }),
-          ]),
+          status: "informational",
+          payload: expect.objectContaining({
+            sections: expect.arrayContaining([
+              expect.objectContaining({
+                items: expect.arrayContaining([
+                  expect.objectContaining({ value: "BLOCKED_ON_CONFIRMATION" }),
+                ]),
+              }),
+            ]),
+          }),
         }),
       ]),
     );
   });
 
-  it("resume path повторно запускает tech_map_draft и возвращает completed window", async () => {
+  it("resume path без approved pending action не переводит tech_map_draft в completed window", async () => {
     process.env.RAI_AGENT_RUNTIME_MODE = "agent-first-hybrid";
     const result = await agent.orchestrate(
       {
@@ -918,48 +914,8 @@ describe("SupervisorAgent", () => {
       "user-1",
     );
 
-    expect(result.pendingClarification).toBeNull();
-    expect(result.workWindows).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          windowId: "win-techmap-thread-1",
-          parentWindowId: null,
-          relatedWindowIds: ["win-techmap-thread-1-result-hint"],
-          category: "result",
-          priority: 70,
-          mode: "takeover",
-          status: "completed",
-          payload: expect.objectContaining({
-            fieldRef: "field-42",
-            seasonRef: "season-42",
-            missingKeys: [],
-          }),
-        }),
-        expect.objectContaining({
-          windowId: "win-techmap-thread-1-result-hint",
-          type: "context_hint",
-          parentWindowId: "win-techmap-thread-1",
-          category: "result",
-          priority: 30,
-          mode: "inline",
-          status: "completed",
-          actions: expect.arrayContaining([
-            expect.objectContaining({
-              kind: "focus_window",
-              targetWindowId: "win-techmap-thread-1",
-            }),
-            expect.objectContaining({
-              kind: "open_field_card",
-              label: "Открыть поле",
-            }),
-            expect.objectContaining({
-              kind: "go_to_techmap",
-              targetRoute: "/consulting/techmaps/active",
-            }),
-          ]),
-        }),
-      ]),
-    );
+    expect(result.pendingClarification).toBeUndefined();
+    expect(result.text).toContain("ожидает подтверждения");
   });
 
   it("прокидывает tech-map clarify lifecycle в supervisor intake и forensics", async () => {
@@ -1270,6 +1226,307 @@ describe("SupervisorAgent", () => {
     executeAgentSpy.mockRestore();
   });
 
+  it("planner runtime держит tech-map clarify branch в RUNNING, пока core уже COMPLETED", async () => {
+    const prevPlanner = process.env.RAI_PLANNER_RUNTIME_ENABLED;
+    const prevRuntime = process.env.RAI_AGENT_RUNTIME_MODE;
+    try {
+      process.env.RAI_PLANNER_RUNTIME_ENABLED = "true";
+      process.env.RAI_AGENT_RUNTIME_MODE = "agent-first-hybrid";
+      intentRouterMock.classify.mockReturnValueOnce({
+        targetRole: "agronomist",
+        intent: "generate_tech_map_draft",
+        toolName: RaiToolName.GenerateTechMapDraft,
+        confidence: 0.7,
+        method: "regex",
+        reason: "match: техкарт",
+      });
+      intentRouterMock.buildAutoToolCall.mockReturnValueOnce({
+        name: RaiToolName.GenerateTechMapDraft,
+        payload: {
+          fieldRef: "field-42",
+          seasonRef: "season-42",
+          crop: "rapeseed",
+        },
+      });
+      semanticRouterMock.evaluate.mockResolvedValueOnce({
+        promotedPrimary: false,
+        sliceId: "agro.techmaps.list-open-create",
+        requestedToolCalls: [],
+        classification: {
+          targetRole: "agronomist",
+          intent: "tech_map_draft",
+          toolName: RaiToolName.GenerateTechMapDraft,
+          confidence: 0.85,
+          method: "semantic_route_shadow",
+          reason: "semantic_router:techmap_create_execute",
+        },
+        semanticIntent: {
+          domain: "agro",
+          entity: "techmap",
+          action: "create",
+          interactionMode: "write_candidate",
+          mutationRisk: "side_effecting_write",
+          filters: {},
+          requiredContext: [],
+          focusObject: {
+            kind: "techmap",
+            id: "techmap-77",
+          },
+          dialogState: {
+            activeFlow: null,
+            pendingClarificationKeys: [],
+            lastUserAction: null,
+          },
+          resolvability: "resolved",
+          ambiguityType: "none",
+          confidenceBand: "high",
+          reason: "semantic_router:techmap_create_execute",
+        },
+        routeDecision: {
+          decisionType: "execute",
+          recommendedExecutionMode: "direct_execute",
+          eligibleTools: [RaiToolName.GenerateTechMapDraft],
+          eligibleFlows: ["tech_map_draft"],
+          requiredContextMissing: ["soil_profile"],
+          policyChecksRequired: [],
+          needsConfirmation: false,
+          needsClarification: true,
+          abstainReason: null,
+          policyBlockReason: null,
+        },
+        candidateRoutes: [],
+        divergence: {
+          isMismatch: false,
+          mismatchKinds: [],
+          summary: "match",
+          legacyRouteKey: "agronomist:tech_map_draft",
+          semanticRouteKey: "agro:techmap:create",
+        },
+        versionInfo: {
+          routerVersion: "semantic-router-v1",
+          promptVersion: "semantic-router-prompt-v1",
+          toolsetVersion: "toolset-v1",
+          workspaceStateDigest: "digest",
+        },
+        latencyMs: 5,
+        executionPath: "semantic_route_shadow",
+        routingContext: {
+          source: "shadow",
+          promotedPrimary: false,
+          enforceCapabilityGating: false,
+          sliceId: "agro.techmaps.list-open-create",
+          semanticIntent: {
+            domain: "agro",
+            entity: "techmap",
+            action: "create",
+            interactionMode: "write_candidate",
+            mutationRisk: "side_effecting_write",
+            filters: {},
+            requiredContext: [],
+            focusObject: {
+              kind: "techmap",
+              id: "techmap-77",
+            },
+            dialogState: {
+              activeFlow: null,
+              pendingClarificationKeys: [],
+              lastUserAction: null,
+            },
+            resolvability: "resolved",
+            ambiguityType: "none",
+            confidenceBand: "high",
+            reason: "semantic_router:techmap_create_execute",
+          },
+          routeDecision: {
+            decisionType: "execute",
+            recommendedExecutionMode: "direct_execute",
+            eligibleTools: [RaiToolName.GenerateTechMapDraft],
+            eligibleFlows: ["tech_map_draft"],
+            requiredContextMissing: ["soil_profile"],
+            policyChecksRequired: [],
+            needsConfirmation: false,
+            needsClarification: true,
+            abstainReason: null,
+            policyBlockReason: null,
+          },
+          candidateRoutes: [],
+        },
+        llmUsed: false,
+        llmError: null,
+      });
+
+      const clarifyPayload = {
+        draftId: "draft-1",
+        clarifyBatch: {
+          mode: "MULTI_STEP",
+          status: "OPEN",
+          resume_token:
+            "resume:tech-map:draft-1:clarify:draft-1:soil_profile",
+        },
+        workflowResumeState: {
+          resume_from_phase: "MISSING_CONTEXT_TRIAGE",
+          external_recheck_required: false,
+        },
+      };
+
+      const executeAgentSpy = jest
+        .spyOn(agentRuntimeService, "executeAgent")
+        .mockResolvedValueOnce({
+          executedTools: [
+            {
+              name: RaiToolName.GenerateTechMapDraft,
+              result: clarifyPayload,
+            },
+          ],
+          agentExecution: {
+            role: "agronomist",
+            status: "COMPLETED",
+            text: "Черновик техкарты создан, нужен добор контекста.",
+            structuredOutput: {
+              data: clarifyPayload,
+              intent: "generate_tech_map_draft",
+              confidence: 0.82,
+            },
+            structuredOutputs: [
+              {
+                data: clarifyPayload,
+                intent: "generate_tech_map_draft",
+                confidence: 0.82,
+              },
+            ],
+            branchResults: [],
+            branchTrustAssessments: [],
+            branchCompositions: [],
+            delegationChain: [],
+            usage: undefined,
+            toolCalls: [
+              {
+                name: RaiToolName.GenerateTechMapDraft,
+                result: clarifyPayload,
+              },
+            ],
+            connectorCalls: [],
+            evidence: [],
+            validation: { passed: true, reasons: [] },
+            fallbackUsed: false,
+            outputContractVersion: "v1",
+            auditPayload: {
+              runtimeMode: "agent-first-hybrid",
+              autonomyMode: "advisory",
+              allowedToolNames: [RaiToolName.GenerateTechMapDraft],
+              blockedToolNames: [],
+              connectorNames: [],
+              outputContractId: "agronom-v1",
+            },
+          },
+          runtimeGovernance: undefined,
+        } as any);
+
+      const result = await agent.orchestrate(
+        {
+          message: "Составь техкарту по озимому рапсу",
+          workspaceContext: {
+            route: "/consulting/techmaps",
+            filters: {
+              seasonId: "season-42",
+            },
+          },
+        },
+        "company-1",
+        "user-1",
+      );
+
+      expect(executeAgentSpy).toHaveBeenCalledTimes(1);
+      const byId = new Map(
+        result.executionSurface?.branches.map((branch) => [branch.branchId, branch]) ?? [],
+      );
+      expect(byId.get("tech_map_core")?.lifecycle).toBe("COMPLETED");
+      expect(byId.get("tech_map_clarify")?.lifecycle).toBe("PLANNED");
+      expect(result.toolCalls).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            name: RaiToolName.GenerateTechMapDraft,
+          }),
+        ]),
+      );
+
+      executeAgentSpy.mockRestore();
+    } finally {
+      if (prevPlanner === undefined) {
+        delete process.env.RAI_PLANNER_RUNTIME_ENABLED;
+      } else {
+        process.env.RAI_PLANNER_RUNTIME_ENABLED = prevPlanner;
+      }
+      if (prevRuntime === undefined) {
+        delete process.env.RAI_AGENT_RUNTIME_MODE;
+      } else {
+        process.env.RAI_AGENT_RUNTIME_MODE = prevRuntime;
+      }
+    }
+  });
+
+  it("planner runtime не отбрасывает чисто tool-less RUNNING ветки в multi-branch плане", () => {
+    const branches = (agent as any).resolvePlannerRunnableBranchesForTick(
+      {
+        role: "agronomist",
+        message: "resume clarify",
+        traceId: "tr-toolless-only",
+        threadId: "th-toolless-only",
+        memoryContext: { profile: {}, recalledEpisodes: [] },
+        semanticIngressFrame: {
+          version: "v1",
+          executionPlan: {
+            version: "v1",
+            planId: "plan-toolless-only",
+            strategy: "mixed",
+            sourceGraphId: "graph-toolless-only",
+            branches: [
+              {
+                branchId: "clarify_only",
+                order: 0,
+                dependsOn: [],
+                ownerRole: "agronomist",
+                toolName: null,
+                intent: "clarify_context",
+              },
+              {
+                branchId: "follow_up_signal",
+                order: 1,
+                dependsOn: ["clarify_only"],
+                ownerRole: "agronomist",
+                toolName: null,
+                intent: "clarify_context",
+              },
+            ],
+          },
+          executionSurface: {
+            version: "v1",
+            branches: [
+              {
+                branchId: "clarify_only",
+                lifecycle: "RUNNING",
+                mutationState: "NOT_REQUIRED",
+              },
+              {
+                branchId: "follow_up_signal",
+                lifecycle: "PLANNED",
+                mutationState: "NOT_REQUIRED",
+              },
+            ],
+          },
+        },
+      },
+      true,
+    );
+
+    expect(branches).toEqual([
+      expect.objectContaining({
+        branchId: "clarify_only",
+        toolName: null,
+      }),
+    ]);
+  });
+
   it("превращает economist NEEDS_MORE_DATA в payload добора контекста для план-факта", async () => {
     process.env.RAI_AGENT_RUNTIME_MODE = "agent-first-hybrid";
     intentRouterMock.classify.mockReturnValueOnce({
@@ -1417,7 +1674,7 @@ describe("SupervisorAgent", () => {
       intent: "compute_deviations",
       toolName: RaiToolName.ComputeDeviations,
       confidence: 0.91,
-      method: "tool_call_primary",
+      method: "explicit_tool_path",
       reason: "explicit intent",
     });
     intentRouterMock.buildAutoToolCall.mockReturnValueOnce({
@@ -1437,7 +1694,7 @@ describe("SupervisorAgent", () => {
         agentExecution: {
           role: "agronomist",
           status: "COMPLETED",
-          executionPath: "tool_call_primary",
+          executionPath: "explicit_tool_path",
           text: "Агроном собрал первичный результат.",
           structuredOutput: {
             confidence: 0.2,
@@ -1478,7 +1735,7 @@ describe("SupervisorAgent", () => {
         agentExecution: {
           role: "knowledge",
           status: "COMPLETED",
-          executionPath: "tool_call_primary",
+          executionPath: "explicit_tool_path",
           text: "Knowledge cross-check подтверждает расчёт.",
           structuredOutput: {
             summary: "Knowledge cross-check подтверждает расчёт.",
@@ -1588,7 +1845,7 @@ describe("SupervisorAgent", () => {
       intent: "compute_deviations",
       toolName: RaiToolName.ComputeDeviations,
       confidence: 0.95,
-      method: "tool_call_primary",
+      method: "explicit_tool_path",
       reason: "explicit intent",
     });
     intentRouterMock.buildAutoToolCall.mockReturnValueOnce({
@@ -1608,7 +1865,7 @@ describe("SupervisorAgent", () => {
         agentExecution: {
           role: "agronomist",
           status: "COMPLETED",
-          executionPath: "tool_call_primary",
+          executionPath: "explicit_tool_path",
           text: "Первичный расчёт без evidence.",
           structuredOutput: {
             confidence: 0.95,
@@ -1645,7 +1902,7 @@ describe("SupervisorAgent", () => {
         agentExecution: {
           role: "knowledge",
           status: "COMPLETED",
-          executionPath: "tool_call_primary",
+          executionPath: "explicit_tool_path",
           text: "Knowledge cross-check подтвердил расчёт.",
           structuredOutput: {
             summary: "Knowledge cross-check подтвердил расчёт.",
@@ -1713,7 +1970,7 @@ describe("SupervisorAgent", () => {
       intent: "compute_deviations",
       toolName: RaiToolName.ComputeDeviations,
       confidence: 0.95,
-      method: "tool_call_primary",
+      method: "explicit_tool_path",
       reason: "explicit intent",
     });
     intentRouterMock.buildAutoToolCall.mockReturnValueOnce({
@@ -1733,7 +1990,7 @@ describe("SupervisorAgent", () => {
         agentExecution: {
           role: "agronomist",
           status: "COMPLETED",
-          executionPath: "tool_call_primary",
+          executionPath: "explicit_tool_path",
           text: "Подтверждённый расчёт.",
           structuredOutput: {
             confidence: 0.95,
@@ -1872,7 +2129,7 @@ describe("SupervisorAgent", () => {
       latencyMs: 4,
       sliceId: null,
       promotedPrimary: false,
-      executionPath: "semantic_router_shadow",
+      executionPath: "semantic_route_shadow",
       requestedToolCalls: [
         {
           name: RaiToolName.RegisterCounterparty,
@@ -1888,7 +2145,7 @@ describe("SupervisorAgent", () => {
         intent: "register_counterparty",
         toolName: RaiToolName.RegisterCounterparty,
         confidence: 0.8,
-        method: "semantic_router_shadow",
+        method: "semantic_route_shadow",
         reason: "crm_write_candidate",
       },
       routingContext: {
@@ -1945,7 +2202,7 @@ describe("SupervisorAgent", () => {
         agentExecution: {
           role: "crm_agent",
           status: "COMPLETED",
-          executionPath: "tool_call_primary",
+          executionPath: "explicit_tool_path",
           text: "Контрагент зарегистрирован.",
           structuredOutput: {
             summary: "Контрагент зарегистрирован.",
@@ -2006,7 +2263,7 @@ describe("SupervisorAgent", () => {
           ownerRole: "crm_agent",
           intent: "register_counterparty",
           toolName: RaiToolName.RegisterCounterparty,
-          source: "legacy_contracts",
+          source: "fallback_normalization",
         }),
         entities: expect.arrayContaining([
           expect.objectContaining({
@@ -2064,7 +2321,7 @@ describe("SupervisorAgent", () => {
         intent: "classify_dialog_thread",
         toolName: RaiToolName.ClassifyDialogThread,
         decisionType: "execute",
-        source: "legacy_contracts",
+        source: "fallback_normalization",
       },
       operationAuthority: "unknown",
       missingSlots: [],
@@ -2085,7 +2342,7 @@ describe("SupervisorAgent", () => {
       agentExecution: {
         role: "front_office_agent",
         status: "COMPLETED",
-        executionPath: "tool_call_primary",
+        executionPath: "explicit_tool_path",
         text: "Принял: привет",
         structuredOutput: {
           summary: "Принял: привет",
@@ -2185,14 +2442,14 @@ describe("SupervisorAgent", () => {
       latencyMs: 3,
       sliceId: null,
       promotedPrimary: false,
-      executionPath: "semantic_router_shadow",
+      executionPath: "semantic_route_shadow",
       requestedToolCalls: [],
       classification: {
         targetRole: "crm_agent",
         intent: "register_counterparty",
         toolName: RaiToolName.RegisterCounterparty,
         confidence: 1,
-        method: "semantic_router_shadow",
+        method: "semantic_route_shadow",
         reason: "crm_write_candidate",
       },
       routingContext: {
@@ -2249,7 +2506,7 @@ describe("SupervisorAgent", () => {
         agentExecution: {
           role: "crm_agent",
           status: "COMPLETED",
-          executionPath: "tool_call_primary",
+          executionPath: "explicit_tool_path",
           text: "Ожидается подтверждение.",
           structuredOutput: {
             summary: "Создан PendingAction.",
@@ -2321,7 +2578,19 @@ describe("SupervisorAgent", () => {
     );
   });
 
-  it("исполняет crm composite flow register_counterparty -> create_account -> open_workspace как staged workflow", async () => {
+  it.each([
+    { mode: "planner_off" as const },
+    { mode: "planner_on" as const },
+  ])(
+    "исполняет crm composite flow register_counterparty -> create_account -> open_workspace как staged workflow ($mode)",
+    async ({ mode }) => {
+    const prevPlanner = process.env.RAI_PLANNER_RUNTIME_ENABLED;
+    try {
+      if (mode === "planner_on") {
+        process.env.RAI_PLANNER_RUNTIME_ENABLED = "true";
+      } else {
+        delete process.env.RAI_PLANNER_RUNTIME_ENABLED;
+      }
     process.env.RAI_AGENT_RUNTIME_MODE = "agent-first-hybrid";
     semanticRouterMock.evaluate.mockResolvedValueOnce({
       semanticIntent: {
@@ -2372,14 +2641,14 @@ describe("SupervisorAgent", () => {
       latencyMs: 3,
       sliceId: null,
       promotedPrimary: false,
-      executionPath: "semantic_router_shadow",
+      executionPath: "semantic_route_shadow",
       requestedToolCalls: [],
       classification: {
         targetRole: "crm_agent",
         intent: "register_counterparty",
         toolName: RaiToolName.RegisterCounterparty,
         confidence: 1,
-        method: "semantic_router_shadow",
+        method: "semantic_route_shadow",
         reason: "crm_write_candidate",
       },
       routingContext: {
@@ -2445,7 +2714,7 @@ describe("SupervisorAgent", () => {
         agentExecution: {
           role: "crm_agent",
           status: "COMPLETED",
-          executionPath: "tool_call_primary",
+          executionPath: "explicit_tool_path",
           text: "Контрагент зарегистрирован.",
           structuredOutput: {
             intent: "register_counterparty",
@@ -2502,7 +2771,7 @@ describe("SupervisorAgent", () => {
         agentExecution: {
           role: "crm_agent",
           status: "COMPLETED",
-          executionPath: "tool_call_primary",
+          executionPath: "explicit_tool_path",
           text: "CRM-аккаунт создан.",
           structuredOutput: {
             intent: "create_crm_account",
@@ -2566,7 +2835,7 @@ describe("SupervisorAgent", () => {
         agentExecution: {
           role: "crm_agent",
           status: "COMPLETED",
-          executionPath: "tool_call_primary",
+          executionPath: "explicit_tool_path",
           text: "Карточка открыта.",
           structuredOutput: {
             intent: "review_account_workspace",
@@ -2646,8 +2915,20 @@ describe("SupervisorAgent", () => {
     expect(secondExecutionRequest.requestedTools?.[0]?.name).toBe(
       RaiToolName.CreateCrmAccount,
     );
+    expect(secondExecutionRequest.requestedTools?.[0]?.payload).toEqual(
+      expect.objectContaining({
+        inn: "2636041493",
+        partyId: "party-1",
+      }),
+    );
     expect(thirdExecutionRequest.requestedTools?.[0]?.name).toBe(
       RaiToolName.GetCrmAccountWorkspace,
+    );
+    expect(thirdExecutionRequest.requestedTools?.[0]?.payload).toEqual(
+      expect.objectContaining({
+        accountId: "acc-1",
+        query: "ООО Ромашка",
+      }),
     );
 
     const auditMetadata =
@@ -2663,9 +2944,42 @@ describe("SupervisorAgent", () => {
         }),
       }),
     );
+
+    if (mode === "planner_on") {
+      const ingress = auditMetadata?.semanticIngressFrame as {
+        executionSurface?: {
+          branches: Array<{ branchId: string; lifecycle: string }>;
+        };
+      };
+      expect(ingress?.executionSurface?.branches).toHaveLength(3);
+      expect(
+        ingress?.executionSurface?.branches?.every(
+          (b) => b.lifecycle === "COMPLETED",
+        ),
+      ).toBe(true);
+    }
+    } finally {
+      if (prevPlanner === undefined) {
+        delete process.env.RAI_PLANNER_RUNTIME_ENABLED;
+      } else {
+        process.env.RAI_PLANNER_RUNTIME_ENABLED = prevPlanner;
+      }
+    }
   });
 
-  it("исполняет agro execution fact -> finance cost aggregation как staged analytical workflow", async () => {
+  it.each([
+    { mode: "planner_off" as const },
+    { mode: "planner_on" as const },
+  ])(
+    "исполняет agro execution fact -> finance cost aggregation как staged analytical workflow ($mode)",
+    async ({ mode }) => {
+    const prevPlanner = process.env.RAI_PLANNER_RUNTIME_ENABLED;
+    try {
+      if (mode === "planner_on") {
+        process.env.RAI_PLANNER_RUNTIME_ENABLED = "true";
+      } else {
+        delete process.env.RAI_PLANNER_RUNTIME_ENABLED;
+      }
     process.env.RAI_AGENT_RUNTIME_MODE = "agent-first-hybrid";
     intentRouterMock.classify.mockReturnValue({
       targetRole: "agronomist",
@@ -2685,7 +2999,7 @@ describe("SupervisorAgent", () => {
         intent: "compute_deviations",
         toolName: RaiToolName.ComputeDeviations,
         confidence: 0.82,
-        method: "semantic_router_shadow",
+        method: "semantic_route_shadow",
         reason: "agro_execution_fact",
       },
       semanticIntent: {
@@ -2734,7 +3048,7 @@ describe("SupervisorAgent", () => {
         workspaceStateDigest: "digest",
       },
       latencyMs: 3,
-      executionPath: "semantic_router_shadow",
+      executionPath: "semantic_route_shadow",
       routingContext: {
         source: "shadow",
         promotedPrimary: false,
@@ -2795,7 +3109,7 @@ describe("SupervisorAgent", () => {
         agentExecution: {
           role: "agronomist",
           status: "COMPLETED",
-          executionPath: "tool_call_primary",
+          executionPath: "explicit_tool_path",
           text: "Агро execution fact подтвержден.",
           structuredOutput: {
             intent: "compute_deviations",
@@ -2848,7 +3162,7 @@ describe("SupervisorAgent", () => {
         agentExecution: {
           role: "economist",
           status: "COMPLETED",
-          executionPath: "tool_call_primary",
+          executionPath: "explicit_tool_path",
           text: "Финансовая стоимость агрегирована.",
           structuredOutput: {
             intent: "compute_plan_fact",
@@ -2918,10 +3232,46 @@ describe("SupervisorAgent", () => {
     expect(executeAgentSpy.mock.calls[1]?.[0]).toEqual(
       expect.objectContaining({
         role: "economist",
+        requestedTools: [
+          expect.objectContaining({
+            name: RaiToolName.ComputePlanFact,
+            payload: {
+              scope: {
+                planId: "plan-2026",
+                seasonId: "season-2026",
+              },
+            },
+          }),
+        ],
       }),
     );
     expect(result.text).toContain("Составной аналитический сценарий выполнен");
     expect(result.workWindows?.some((window) => window.payload.intentId === "multi_source_aggregation")).toBe(true);
+
+    if (mode === "planner_on") {
+      const auditMetadata =
+        prismaServiceMock.aiAuditEntry.create.mock.calls[
+          prismaServiceMock.aiAuditEntry.create.mock.calls.length - 1
+        ]?.[0]?.data?.metadata;
+      const ingress = auditMetadata?.semanticIngressFrame as {
+        executionSurface?: {
+          branches: Array<{ branchId: string; lifecycle: string }>;
+        };
+      };
+      expect(ingress?.executionSurface?.branches).toHaveLength(2);
+      expect(
+        ingress?.executionSurface?.branches?.every(
+          (b) => b.lifecycle === "COMPLETED",
+        ),
+      ).toBe(true);
+    }
+    } finally {
+      if (prevPlanner === undefined) {
+        delete process.env.RAI_PLANNER_RUNTIME_ENABLED;
+      } else {
+        process.env.RAI_PLANNER_RUNTIME_ENABLED = prevPlanner;
+      }
+    }
   });
 
   it("фиксирует before/after token-cost метрики для legacy-long-text vs stage3-json", async () => {
@@ -2934,7 +3284,7 @@ describe("SupervisorAgent", () => {
       intent: "compute_deviations",
       toolName: RaiToolName.ComputeDeviations,
       confidence: 0.9,
-      method: "tool_call_primary",
+      method: "explicit_tool_path",
       reason: "explicit",
     });
     intentRouterMock.buildAutoToolCall.mockReturnValue({
@@ -2951,7 +3301,7 @@ describe("SupervisorAgent", () => {
         agentExecution: {
           role: "agronomist",
           status: "COMPLETED",
-          executionPath: "tool_call_primary",
+          executionPath: "explicit_tool_path",
           text: "Legacy long text answer",
           structuredOutput: { confidence: 0.9, summary: "legacy baseline" },
           toolCalls: [{ name: RaiToolName.ComputeDeviations, result: {} }],
@@ -2985,7 +3335,7 @@ describe("SupervisorAgent", () => {
         agentExecution: {
           role: "agronomist",
           status: "COMPLETED",
-          executionPath: "tool_call_primary",
+          executionPath: "explicit_tool_path",
           text: "JSON worker answer",
           structuredOutput: {
             confidence: 0.2,
@@ -3017,7 +3367,7 @@ describe("SupervisorAgent", () => {
         agentExecution: {
           role: "knowledge",
           status: "COMPLETED",
-          executionPath: "tool_call_primary",
+          executionPath: "explicit_tool_path",
           text: "cross-check",
           structuredOutput: {
             summary: "cross-check",
@@ -3194,6 +3544,8 @@ describe("SupervisorAgent", () => {
           { provide: OpenRouterGatewayService, useValue: openRouterGatewayMock },
           { provide: SemanticRouterService, useValue: semanticRouterMock },
           SemanticIngressService,
+          BranchSchedulerService,
+          BranchStatePlaneService,
           { provide: AgentPromptAssemblyService, useValue: agentPromptAssemblyMock },
           { provide: TraceSummaryService, useValue: overrides?.traceSummary ?? traceSummaryMock },
           { provide: AutonomyPolicyService, useValue: { getCompanyAutonomyLevel: jest.fn().mockResolvedValue("AUTONOMOUS") } },
@@ -3289,6 +3641,116 @@ describe("SupervisorAgent", () => {
       expect(traceSummaryMock.updateQuality).not.toHaveBeenCalled();
     });
 
+    it("planner default-on: ответ содержит executionSurface", async () => {
+      delete process.env.RAI_PLANNER_ROLLBACK;
+      const ag = await buildAgent();
+      const res = await ag.orchestrate(
+        { message: "планировщик on", clientTraceId: "tr-planner-on" },
+        "company-1",
+        "user-1",
+      );
+      expect(res.executionSurface?.branches?.length).toBeGreaterThan(0);
+      expect(res.executionSurface?.branches[0].lifecycle).toBe("COMPLETED");
+    });
+
+    it("RAI_PLANNER_ROLLBACK=true: executionSurface в ответе нет", async () => {
+      const prev = process.env.RAI_PLANNER_ROLLBACK;
+      process.env.RAI_PLANNER_ROLLBACK = "true";
+      try {
+        const ag = await buildAgent();
+        const res = await ag.orchestrate(
+          { message: "планировщик rollback", clientTraceId: "tr-planner-off" },
+          "company-1",
+          "user-1",
+        );
+        expect(res.executionSurface).toBeUndefined();
+      } finally {
+        if (prev === undefined) {
+          delete process.env.RAI_PLANNER_ROLLBACK;
+        } else {
+          process.env.RAI_PLANNER_ROLLBACK = prev;
+        }
+      }
+    });
+
+    it("audit metadata содержит plannerBranchTelemetry при planner default-on", async () => {
+      const prev = process.env.RAI_PLANNER_ROLLBACK;
+      delete process.env.RAI_PLANNER_ROLLBACK;
+      try {
+        const ag = await buildAgent();
+        await ag.orchestrate(baseRequest, "company-1", "user-1");
+        await new Promise((r) => setTimeout(r, 15));
+        expect(auditCreateMock).toHaveBeenCalled();
+        const meta = auditCreateMock.mock.calls[0][0].data
+          .metadata as Record<string, unknown>;
+        expect(meta.plannerBranchTelemetry).toEqual(
+          expect.objectContaining({
+            strategy: expect.any(String),
+            branches: expect.any(Array),
+          }),
+        );
+        expect(meta.controlTowerPlannerEnvelope).toEqual(
+          expect.objectContaining({
+            schemaVersion: "control_tower.planner_envelope.v1",
+            traceId: expect.any(String),
+            companyId: "company-1",
+            promotion: expect.objectContaining({ enabled: true }),
+            plannerSignals: expect.objectContaining({ telemetryPresent: true }),
+          }),
+        );
+        expect(meta.controlTowerSubIntentGraphSnapshot).toEqual(
+          expect.objectContaining({
+            schemaVersion: "control_tower.sub_intent_graph.v1",
+            graphId: expect.any(String),
+            version: "v1",
+            branches: expect.any(Array),
+          }),
+        );
+      } finally {
+        if (prev === undefined) {
+          delete process.env.RAI_PLANNER_ROLLBACK;
+        } else {
+          process.env.RAI_PLANNER_ROLLBACK = prev;
+        }
+      }
+    });
+
+    it("audit metadata содержит controlTowerPlannerEnvelope при rollback planner", async () => {
+      const prev = process.env.RAI_PLANNER_ROLLBACK;
+      process.env.RAI_PLANNER_ROLLBACK = "true";
+      try {
+        const ag = await buildAgent();
+        await ag.orchestrate(baseRequest, "company-1", "user-1");
+        await new Promise((r) => setTimeout(r, 15));
+        expect(auditCreateMock).toHaveBeenCalled();
+        const meta = auditCreateMock.mock.calls[0][0].data
+          .metadata as Record<string, unknown>;
+        expect(meta.controlTowerPlannerEnvelope).toEqual(
+          expect.objectContaining({
+            schemaVersion: "control_tower.planner_envelope.v1",
+            companyId: "company-1",
+            promotion: expect.objectContaining({
+              enabled: false,
+              mode: "rollback_kill_switch",
+            }),
+            plannerSignals: expect.objectContaining({ telemetryPresent: false }),
+          }),
+        );
+        expect(meta.controlTowerSubIntentGraphSnapshot).toEqual(
+          expect.objectContaining({
+            schemaVersion: "control_tower.sub_intent_graph.v1",
+            branches: expect.any(Array),
+          }),
+        );
+      } finally {
+        if (prev === undefined) {
+          delete process.env.RAI_PLANNER_ROLLBACK;
+        } else {
+          process.env.RAI_PLANNER_ROLLBACK = prev;
+        }
+      }
+    });
+
     it("ordering: updateQuality вызывается только после resolve traceSummary.record и aiAuditEntry.create", async () => {
       const callOrder: string[] = [];
 
@@ -3325,6 +3787,183 @@ describe("SupervisorAgent", () => {
   });
 
   describe("platform-wide interaction contracts", () => {
+    it("planner runtime исполняет multi-explicit non-composite ветки по одной и агрегирует branch trust", async () => {
+      const prevPlanner = process.env.RAI_PLANNER_RUNTIME_ENABLED;
+      const prevRuntime = process.env.RAI_AGENT_RUNTIME_MODE;
+      try {
+        process.env.RAI_PLANNER_RUNTIME_ENABLED = "true";
+        process.env.RAI_AGENT_RUNTIME_MODE = "agent-first-hybrid";
+
+        const executeAgentSpy = jest
+          .spyOn(agentRuntimeService, "executeAgent")
+          .mockImplementation(async (executionRequest) => {
+            const toolName = executionRequest.requestedTools?.[0]?.name;
+            if (toolName === RaiToolName.ComputeDeviations) {
+              return {
+                executedTools: [
+                  {
+                    name: RaiToolName.ComputeDeviations,
+                    result: { summary: "deviations ok" },
+                  },
+                ],
+                agentExecution: {
+                  role: "agronomist",
+                  status: "COMPLETED",
+                  executionPath: "explicit_tool_path",
+                  text: "Отклонения по полю рассчитаны.",
+                  structuredOutput: {
+                    intent: "compute_deviations",
+                    confidence: 0.94,
+                    branchVerdict: "VERIFIED",
+                    scope: {
+                      fieldId: "field-1",
+                    },
+                  },
+                  toolCalls: [
+                    {
+                      name: RaiToolName.ComputeDeviations,
+                      result: { summary: "deviations ok" },
+                    },
+                  ],
+                  connectorCalls: [],
+                  evidence: [],
+                  validation: { passed: true, reasons: [] },
+                  fallbackUsed: false,
+                  outputContractVersion: "v1",
+                  auditPayload: {
+                    runtimeMode: "agent-first-hybrid",
+                    autonomyMode: "advisory",
+                    allowedToolNames: [RaiToolName.ComputeDeviations],
+                    blockedToolNames: [],
+                    connectorNames: [],
+                    outputContractId: "agronom-v1",
+                  },
+                },
+              } as Awaited<ReturnType<AgentRuntimeService["executeAgent"]>>;
+            }
+
+            if (toolName === RaiToolName.QueryKnowledge) {
+              return {
+                executedTools: [
+                  {
+                    name: RaiToolName.QueryKnowledge,
+                    result: { summary: "knowledge ok" },
+                  },
+                ],
+                agentExecution: {
+                  role: "knowledge",
+                  status: "COMPLETED",
+                  executionPath: "explicit_tool_path",
+                  text: "Норматив из базы знаний найден.",
+                  structuredOutput: {
+                    intent: "query_knowledge",
+                    confidence: 0.87,
+                    branchVerdict: "VERIFIED",
+                    data: {
+                      answer: "Норматив найден",
+                    },
+                  },
+                  toolCalls: [
+                    {
+                      name: RaiToolName.QueryKnowledge,
+                      result: { summary: "knowledge ok" },
+                    },
+                  ],
+                  connectorCalls: [],
+                  evidence: [],
+                  validation: { passed: true, reasons: [] },
+                  fallbackUsed: false,
+                  outputContractVersion: "v1",
+                  auditPayload: {
+                    runtimeMode: "agent-first-hybrid",
+                    autonomyMode: "advisory",
+                    allowedToolNames: [RaiToolName.QueryKnowledge],
+                    blockedToolNames: [],
+                    connectorNames: [],
+                    outputContractId: "knowledge-v1",
+                  },
+                },
+              } as Awaited<ReturnType<AgentRuntimeService["executeAgent"]>>;
+            }
+
+            throw new Error(`unexpected tool ${String(toolName)}`);
+          });
+
+        const result = await agent.orchestrate(
+          {
+            message: "сначала посчитай отклонения, потом найди норматив",
+            clientTraceId: "tr-supervisor-planner-multi-explicit",
+            workspaceContext: {
+              route: "/consulting/fields",
+            },
+            toolCalls: [
+              {
+                name: RaiToolName.ComputeDeviations,
+                payload: { scope: { seasonId: "season-1", fieldId: "field-1" } },
+              },
+              {
+                name: RaiToolName.QueryKnowledge,
+                payload: { query: "норматив по отклонениям" },
+              },
+            ],
+          },
+          "company-1",
+          "user-1",
+        );
+
+        expect(executeAgentSpy).toHaveBeenCalledTimes(2);
+        expect(executeAgentSpy.mock.calls[0]?.[0]).toEqual(
+          expect.objectContaining({
+            role: "agronomist",
+            requestedTools: [
+              expect.objectContaining({
+                name: RaiToolName.ComputeDeviations,
+              }),
+            ],
+          }),
+        );
+        expect(executeAgentSpy.mock.calls[1]?.[0]).toEqual(
+          expect.objectContaining({
+            role: "knowledge",
+            requestedTools: [
+              expect.objectContaining({
+                name: RaiToolName.QueryKnowledge,
+              }),
+            ],
+          }),
+        );
+        expect(result.executionSurface?.branches).toHaveLength(2);
+        expect(
+          result.executionSurface?.branches.every(
+            (branch) => branch.lifecycle === "COMPLETED",
+          ),
+        ).toBe(true);
+        expect(result.branchTrustAssessments).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              branch_id: "explicit_0_compute_deviations",
+              source_agent: "agronomist",
+            }),
+            expect.objectContaining({
+              branch_id: "explicit_1_query_knowledge",
+              source_agent: "knowledge",
+            }),
+          ]),
+        );
+      } finally {
+        if (prevPlanner === undefined) {
+          delete process.env.RAI_PLANNER_RUNTIME_ENABLED;
+        } else {
+          process.env.RAI_PLANNER_RUNTIME_ENABLED = prevPlanner;
+        }
+        if (prevRuntime === undefined) {
+          delete process.env.RAI_AGENT_RUNTIME_MODE;
+        } else {
+          process.env.RAI_AGENT_RUNTIME_MODE = prevRuntime;
+        }
+      }
+    });
+
     it("knowledge path возвращает unified windows через contract-layer", async () => {
       process.env.RAI_AGENT_RUNTIME_MODE = "agent-first-hybrid";
       memoryAdapterMock.getProfile.mockResolvedValueOnce({
@@ -3401,15 +4040,9 @@ describe("SupervisorAgent", () => {
       expect(response.workWindows).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
-            type: "related_signals",
-            payload: expect.objectContaining({
-              intentId: "emit_alerts",
-            }),
-          }),
-          expect.objectContaining({
             type: "structured_result",
             payload: expect.objectContaining({
-              intentId: "emit_alerts",
+              intentId: "branch_trust_summary",
             }),
           }),
         ]),

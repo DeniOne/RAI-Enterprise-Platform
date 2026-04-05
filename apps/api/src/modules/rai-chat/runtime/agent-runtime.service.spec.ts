@@ -398,7 +398,9 @@ describe("AgentRuntimeService", () => {
     expect(knowledgeAgentMock.run).toHaveBeenCalled();
     expect(result.agentExecution).toMatchObject({
       role: "knowledge",
-      text: "Grounded answer",
+      structuredOutput: expect.objectContaining({
+        summary: "Grounded answer",
+      }),
       fallbackUsed: false,
       outputContractVersion: "v1",
       validation: { passed: true, reasons: [] },
@@ -535,7 +537,9 @@ describe("AgentRuntimeService", () => {
     expect(knowledgeAgentMock.run).toHaveBeenCalled();
     expect(result.agentExecution).toMatchObject({
       role: "marketer",
-      text: "Grounded answer",
+      structuredOutput: expect.objectContaining({
+        summary: "Grounded answer",
+      }),
       outputContractVersion: "v1",
     });
   });

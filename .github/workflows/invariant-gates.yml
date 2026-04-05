@@ -64,8 +64,26 @@ jobs:
       - name: Routing primary slices + case memory gate (hard fail)
         run: pnpm gate:routing:primary-slices | tee artifacts/routing-primary-slices-eval.log
 
+      - name: API BranchVerdict rules (jest, no LLM)
+        run: pnpm gate:api:branch-verdict-rules | tee artifacts/api-branch-verdict-rules.log
+
+      - name: API model-routing baseline (p95 + structural cost, jest)
+        run: pnpm gate:api:model-routing-baseline | tee artifacts/api-model-routing-baseline.log
+
+      - name: API planner promotion policy (canary/rollback, jest)
+        run: pnpm gate:api:planner-promotion-policy | tee artifacts/api-planner-promotion-policy.log
+
+      - name: API control-tower planner envelope (jest)
+        run: pnpm gate:api:control-tower-planner-envelope | tee artifacts/api-control-tower-planner-envelope.log
+
       - name: Docs lint gate (hard fail)
         run: pnpm lint:docs | tee artifacts/docs-lint-gate.log
+
+      - name: Web RAI chat thread smoke (jest)
+        run: pnpm gate:web:rai-chat-smoke | tee artifacts/web-rai-chat-smoke.log
+
+      - name: Web UI language audit (LANGUAGE_POLICY / user-visible RU)
+        run: pnpm lint:ui-language | tee artifacts/ui-language-gate.log
 
       - name: Upload gate artifacts
         if: always()

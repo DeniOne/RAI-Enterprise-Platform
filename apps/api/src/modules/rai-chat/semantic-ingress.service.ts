@@ -33,18 +33,23 @@ import {
   CompositeWorkflowPlan,
   CompositeWorkflowStageContract,
 } from "../../shared/rai-chat/composite-orchestration.types";
+import { buildSubIntentGraphFromSemanticFrame } from "../../shared/rai-chat/sub-intent-graph.builder";
+import { validateSubIntentGraphAntiTunnel } from "../../shared/rai-chat/sub-intent-graph.mixed-intent-invariants";
 import { extractInnFromMessage } from "../../shared/rai-chat/execution-adapter-heuristics";
+import { getIntentContractByToolName } from "../../shared/rai-chat/agent-interaction-contracts";
 import { RaiToolName } from "../../shared/rai-chat/rai-tools.types";
+import type { SemanticIngressExplicitPlannerToolCall } from "../../shared/rai-chat/semantic-ingress.types";
 
 @Injectable()
 export class SemanticIngressService {
   buildFrame(params: {
     request: RaiChatRequestDto;
-    legacyClassification: IntentClassification;
+    baselineClassification: IntentClassification;
     finalClassification: IntentClassification;
     finalRequestedToolCalls: RaiChatRequestDto["toolCalls"];
     semanticEvaluation: SemanticRoutingEvaluation;
   }): SemanticIngressFrame {
+    const baselineClassification = params.baselineClassification;
     const source = this.resolveSource(
       params.request,
       params.finalClassification,
@@ -59,6 +64,16 @@ export class SemanticIngressService {
       ownerRole: params.finalClassification.targetRole ?? null,
       intent: params.finalClassification.intent ?? null,
       toolName: params.finalClassification.toolName ?? null,
+      payload:
+        params.finalRequestedToolCalls?.[0]?.payload &&
+        typeof params.finalRequestedToolCalls[0].payload === "object"
+          ? {
+              ...(params.finalRequestedToolCalls[0].payload as Record<
+                string,
+                unknown
+              >),
+            }
+          : null,
       decisionType: this.resolveDecisionType(
         params.request,
         params.finalRequestedToolCalls,
@@ -103,7 +118,25 @@ export class SemanticIngressService {
       riskClass,
     });
 
-    return {
+    const hasCompositeStages = Boolean(compositePlan?.stages?.length);
+    const rawToolCalls = params.finalRequestedToolCalls ?? [];
+    let explicitPlannerToolCalls: SemanticIngressExplicitPlannerToolCall[] | undefined;
+    if (!hasCompositeStages && !techMapFrame && rawToolCalls.length >= 2) {
+      explicitPlannerToolCalls = rawToolCalls.map((tc) => {
+        const c = getIntentContractByToolName(tc.name);
+        return {
+          toolName: tc.name,
+          ownerRole: c?.role ?? params.finalClassification.targetRole ?? null,
+          intent: c?.id ?? params.finalClassification.intent ?? null,
+          payload:
+            tc.payload && typeof tc.payload === "object"
+              ? { ...(tc.payload as Record<string, unknown>) }
+              : {},
+        };
+      });
+    }
+
+    const frame: SemanticIngressFrame = {
       version: "v1",
       interactionMode: this.resolveInteractionMode(
         params.request,
@@ -116,7 +149,7 @@ export class SemanticIngressService {
         compositePlan,
       ),
       domainCandidates: this.resolveDomainCandidates(
-        params.legacyClassification,
+        baselineClassification,
         params.finalClassification,
         params.semanticEvaluation,
       ),
@@ -154,6 +187,18 @@ export class SemanticIngressService {
       proofSliceId,
       compositePlan,
       ...(techMapFrame ? { techMapFrame } : {}),
+      ...(explicitPlannerToolCalls ? { explicitPlannerToolCalls } : {}),
+    };
+    const subIntentGraph = buildSubIntentGraphFromSemanticFrame(frame);
+    const antiTunnel = validateSubIntentGraphAntiTunnel(frame, subIntentGraph);
+    if (antiTunnel.ok === false) {
+      throw new Error(
+        `SubIntentGraph anti-tunnel [${antiTunnel.caseId}]: ${antiTunnel.detail}`,
+      );
+    }
+    return {
+      ...frame,
+      subIntentGraph,
     };
   }
 
@@ -165,16 +210,16 @@ export class SemanticIngressService {
     if (request.clarificationResume) {
       return "clarification_resume";
     }
-    if (finalClassification.method === "tool_call_primary") {
+    if (finalClassification.method === "explicit_tool_path") {
       return "explicit_tool_call";
     }
     if (semanticEvaluation.promotedPrimary) {
-      return "semantic_router_primary";
+      return "semantic_route_primary";
     }
-    if (finalClassification.method === "semantic_router_shadow") {
-      return "semantic_router_shadow";
+    if (finalClassification.method === "semantic_route_shadow") {
+      return "semantic_route_shadow";
     }
-    return "legacy_contracts";
+    return "fallback_normalization";
   }
 
   private resolveDecisionType(
@@ -238,7 +283,7 @@ export class SemanticIngressService {
   }
 
   private resolveDomainCandidates(
-    legacyClassification: IntentClassification,
+    baselineClassification: IntentClassification,
     finalClassification: IntentClassification,
     semanticEvaluation: SemanticRoutingEvaluation,
   ): SemanticIngressDomainCandidate[] {
@@ -258,7 +303,8 @@ export class SemanticIngressService {
     const semanticDomain =
       semanticEvaluation.semanticIntent.domain ?? RoutingDomain.Unknown;
     const semanticOwnerRole =
-      semanticEvaluation.classification.targetRole ??
+      semanticEvaluation.classification?.targetRole ??
+      finalClassification.targetRole ??
       this.mapDomainToRole(semanticDomain);
     if (
       semanticDomain !== RoutingDomain.Unknown ||
@@ -410,7 +456,7 @@ export class SemanticIngressService {
     if (
       requestedOperation.ownerRole &&
       requestedOperation.intent &&
-      requestedOperation.source === "semantic_router_primary"
+      requestedOperation.source === "semantic_route_primary"
     ) {
       return `Semantic router выбрал ${requestedOperation.ownerRole}.${requestedOperation.intent}.`;
     }
@@ -1004,6 +1050,16 @@ export class SemanticIngressService {
           agentRole: "crm_agent",
           intent: "register_counterparty",
           toolName: RaiToolName.RegisterCounterparty,
+          payload:
+            params.requestedOperation.payload &&
+            typeof params.requestedOperation.payload === "object"
+              ? {
+                  ...(params.requestedOperation.payload as Record<
+                    string,
+                    unknown
+                  >),
+                }
+              : {},
           label: "Регистрация контрагента",
           dependsOn: [],
           status: "planned",
@@ -1014,6 +1070,41 @@ export class SemanticIngressService {
           agentRole: "crm_agent",
           intent: "create_crm_account",
           toolName: RaiToolName.CreateCrmAccount,
+          payloadBindings: [
+            {
+              sourceStageId: "register_counterparty",
+              sourcePath: "data.legalName",
+              targetPath: "name",
+              writeMode: "set_if_absent",
+              required: false,
+            },
+            {
+              sourceStageId: "register_counterparty",
+              sourcePath: "data.shortName",
+              targetPath: "name",
+              writeMode: "set_if_absent",
+              required: false,
+            },
+            {
+              sourceStageId: "register_counterparty",
+              sourcePath: "data.partyId",
+              targetPath: "name",
+              writeMode: "set_if_absent",
+              required: false,
+            },
+            {
+              sourceStageId: "register_counterparty",
+              sourcePath: "data.inn",
+              targetPath: "inn",
+              required: false,
+            },
+            {
+              sourceStageId: "register_counterparty",
+              sourcePath: "data.partyId",
+              targetPath: "partyId",
+              required: true,
+            },
+          ],
           label: "Создание CRM-аккаунта",
           dependsOn: ["register_counterparty"],
           status: "planned",
@@ -1024,6 +1115,35 @@ export class SemanticIngressService {
           agentRole: "crm_agent",
           intent: "review_account_workspace",
           toolName: RaiToolName.GetCrmAccountWorkspace,
+          payloadBindings: [
+            {
+              sourceStageId: "create_crm_account",
+              sourcePath: "data.accountId",
+              targetPath: "accountId",
+              required: true,
+            },
+            {
+              sourceStageId: "create_crm_account",
+              sourcePath: "data.name",
+              targetPath: "query",
+              writeMode: "set_if_absent",
+              required: false,
+            },
+            {
+              sourceStageId: "register_counterparty",
+              sourcePath: "data.legalName",
+              targetPath: "query",
+              writeMode: "set_if_absent",
+              required: false,
+            },
+            {
+              sourceStageId: "register_counterparty",
+              sourcePath: "data.shortName",
+              targetPath: "query",
+              writeMode: "set_if_absent",
+              required: false,
+            },
+          ],
           label: "Открытие карточки/рабочего пространства",
           dependsOn: ["create_crm_account"],
           status: "planned",
@@ -1087,6 +1207,20 @@ export class SemanticIngressService {
         agentRole: "agronomist",
         intent: "compute_deviations",
         toolName: RaiToolName.ComputeDeviations,
+        payload: {
+          scope: {
+            seasonId: this.readWorkspaceFilterAsString(
+              params.request.workspaceContext?.filters?.seasonId,
+            ),
+            fieldId:
+              this.readWorkspaceFilterAsString(
+                params.request.workspaceContext?.filters?.fieldId,
+              ) ??
+              params.request.workspaceContext?.activeEntityRefs?.find(
+                (item) => item.kind === "field",
+              )?.id,
+          },
+        },
         label: "Факт исполнения по агро-контексту",
         dependsOn: [],
         status: "planned",
@@ -1097,6 +1231,16 @@ export class SemanticIngressService {
         agentRole: "economist",
         intent: "compute_plan_fact",
         toolName: RaiToolName.ComputePlanFact,
+        payload: {
+          scope: {
+            planId: this.readWorkspaceFilterAsString(
+              params.request.workspaceContext?.filters?.planId,
+            ),
+            seasonId: this.readWorkspaceFilterAsString(
+              params.request.workspaceContext?.filters?.seasonId,
+            ),
+          },
+        },
         label: "Агрегация финансовых затрат",
         dependsOn: ["agro_execution_fact"],
         status: "planned",
@@ -1111,6 +1255,18 @@ export class SemanticIngressService {
       summary: "агро-факт исполнения и агрегация финансовых затрат",
       stages,
     };
+  }
+
+  private readWorkspaceFilterAsString(
+    value: string | number | boolean | null | undefined,
+  ): string | undefined {
+    if (typeof value === "string" && value.trim().length > 0) {
+      return value.trim();
+    }
+    if (typeof value === "number") {
+      return String(value);
+    }
+    return undefined;
   }
 
   private isDirectRegisterUserCommand(params: {

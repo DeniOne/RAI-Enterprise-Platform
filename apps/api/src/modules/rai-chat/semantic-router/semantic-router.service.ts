@@ -55,6 +55,7 @@ export class SemanticRouterService {
   async evaluate(
     request: SemanticRoutingRequest,
   ): Promise<SemanticRoutingEvaluation> {
+    const baselineClassification = request.baselineClassification;
     const startedAt = Date.now();
     const candidateToolNames = this.collectToolIdentifiers(request);
     const versionInfo = buildRoutingVersionInfo({
@@ -68,7 +69,7 @@ export class SemanticRouterService {
         companyId: request.companyId,
         message: request.message,
         workspaceContext: request.workspaceContext,
-        legacyClassification: request.legacyClassification,
+        baselineClassification,
         semanticIntent: deterministicBase.semanticIntent,
         routeDecision: deterministicBase.routeDecision,
         sliceId: deterministicBase.sliceId,
@@ -115,6 +116,7 @@ export class SemanticRouterService {
     SemanticRoutingEvaluation,
     "versionInfo" | "latencyMs" | "llmUsed" | "llmError"
   > {
+    const baselineClassification = request.baselineClassification;
     const normalized = request.message.toLowerCase();
     const workspace = request.workspaceContext;
     const sliceId = this.resolveSliceId(request.message, workspace);
@@ -175,7 +177,7 @@ export class SemanticRouterService {
         intent: "query_knowledge",
         toolName: RaiToolName.QueryKnowledge,
         confidence: 0.92,
-        method: "semantic_router_shadow",
+        method: "semantic_route_shadow",
         reason: "semantic_router:query_knowledge_execute",
       };
       requestedToolCalls = [
@@ -247,7 +249,7 @@ export class SemanticRouterService {
         intent: "open_techmaps_registry",
         toolName: null,
         confidence: 0.94,
-        method: "semantic_router_shadow",
+        method: "semantic_route_shadow",
         reason: "semantic_router:read_only_techmaps",
       };
       requestedToolCalls = [];
@@ -331,7 +333,7 @@ export class SemanticRouterService {
         intent: "tech_map_draft",
         toolName: RaiToolName.GenerateTechMapDraft,
         confidence: requiredContextMissing.length === 0 ? 0.92 : 0.83,
-        method: "semantic_router_shadow",
+        method: "semantic_route_shadow",
         reason:
           requiredContextMissing.length === 0
             ? "semantic_router:techmap_create_execute"
@@ -406,7 +408,7 @@ export class SemanticRouterService {
         intent: "compute_deviations",
         toolName: RaiToolName.ComputeDeviations,
         confidence: 0.88,
-        method: "semantic_router_shadow",
+        method: "semantic_route_shadow",
         reason: "semantic_router:compute_deviations",
       };
       requestedToolCalls = [
@@ -474,7 +476,7 @@ export class SemanticRouterService {
         intent: "simulate_scenario",
         toolName: RaiToolName.SimulateScenario,
         confidence: planId || seasonRef ? 0.9 : 0.78,
-        method: "semantic_router_shadow",
+        method: "semantic_route_shadow",
         reason: "semantic_router:simulate_scenario",
       };
       requestedToolCalls = [
@@ -542,7 +544,7 @@ export class SemanticRouterService {
         intent: "compute_risk_assessment",
         toolName: RaiToolName.ComputeRiskAssessment,
         confidence: planId || seasonRef ? 0.89 : 0.76,
-        method: "semantic_router_shadow",
+        method: "semantic_route_shadow",
         reason: "semantic_router:compute_risk_assessment",
       };
       requestedToolCalls = [
@@ -626,7 +628,7 @@ export class SemanticRouterService {
         intent: "compute_plan_fact",
         toolName: RaiToolName.ComputePlanFact,
         confidence: requiredContextMissing.length === 0 ? 0.91 : 0.79,
-        method: "semantic_router_shadow",
+        method: "semantic_route_shadow",
         reason:
           requiredContextMissing.length === 0
             ? "semantic_router:compute_plan_fact_execute"
@@ -720,7 +722,7 @@ export class SemanticRouterService {
         intent: "lookup_counterparty_by_inn",
         toolName: RaiToolName.LookupCounterpartyByInn,
         confidence: requiredContextMissing.length === 0 ? 0.89 : 0.74,
-        method: "semantic_router_shadow",
+        method: "semantic_route_shadow",
         reason:
           requiredContextMissing.length === 0
             ? "semantic_router:lookup_counterparty_by_inn_execute"
@@ -817,7 +819,7 @@ export class SemanticRouterService {
         intent: "review_account_workspace",
         toolName: RaiToolName.GetCrmAccountWorkspace,
         confidence: requiredContextMissing.length === 0 ? 0.88 : 0.73,
-        method: "semantic_router_shadow",
+        method: "semantic_route_shadow",
         reason:
           requiredContextMissing.length === 0
             ? "semantic_router:review_account_workspace_execute"
@@ -910,7 +912,7 @@ export class SemanticRouterService {
         intent: "review_ar_balance",
         toolName: RaiToolName.GetArBalance,
         confidence: requiredContextMissing.length === 0 ? 0.9 : 0.74,
-        method: "semantic_router_shadow",
+        method: "semantic_route_shadow",
         reason:
           requiredContextMissing.length === 0
             ? "semantic_router:review_ar_balance_execute"
@@ -1023,7 +1025,7 @@ export class SemanticRouterService {
         intent,
         toolName,
         confidence: requiredContextMissing.length === 0 ? 0.89 : 0.74,
-        method: "semantic_router_shadow",
+        method: "semantic_route_shadow",
         reason:
           requiredContextMissing.length === 0
             ? `semantic_router:${intent}_execute`
@@ -1048,7 +1050,7 @@ export class SemanticRouterService {
       );
     } else {
       semanticIntent = {
-        domain: this.mapDomainFromLegacy(request.legacyClassification),
+        domain: this.mapDomainFromBaseline(baselineClassification),
         entity: RoutingEntity.Unknown,
         action: RoutingAction.Unknown,
         interactionMode: InteractionMode.Unknown,
@@ -1074,18 +1076,16 @@ export class SemanticRouterService {
         abstainReason: "no_matching_route",
         policyBlockReason: null,
       };
-      candidateRoutes = this.buildLegacyCandidates(
-        request.legacyClassification,
-      );
+      candidateRoutes = this.buildBaselineCandidates(baselineClassification);
       classification = {
-        ...request.legacyClassification,
-        method: "semantic_router_shadow",
+        ...baselineClassification,
+        method: "semantic_route_shadow",
       };
       requestedToolCalls = request.requestedToolCalls;
     }
 
     const divergence = this.buildDivergence(
-      request.legacyClassification,
+      baselineClassification,
       semanticIntent,
       routeDecision,
     );
@@ -1108,11 +1108,11 @@ export class SemanticRouterService {
       sliceId,
       promotedPrimary,
       executionPath: promotedPrimary
-        ? "semantic_router_primary"
-        : "semantic_router_shadow",
+        ? "semantic_route_primary"
+        : "semantic_route_shadow",
       requestedToolCalls,
       classification: promotedPrimary
-        ? { ...classification, method: "semantic_router_primary" }
+        ? { ...classification, method: "semantic_route_primary" }
         : classification,
       routingContext,
       retrievedCaseMemory: [],
@@ -1129,6 +1129,7 @@ export class SemanticRouterService {
     SemanticRoutingEvaluation,
     "versionInfo" | "latencyMs" | "llmUsed" | "llmError"
   > | null> {
+    const baselineClassification = request.baselineClassification;
     if (process.env.RAI_SEMANTIC_ROUTER_LLM_ENABLED !== "true") {
       return null;
     }
@@ -1167,9 +1168,9 @@ export class SemanticRouterService {
                 }
               : null,
             legacy: {
-              targetRole: request.legacyClassification.targetRole,
-              intent: request.legacyClassification.intent,
-              toolName: request.legacyClassification.toolName,
+              targetRole: baselineClassification.targetRole,
+              intent: baselineClassification.intent,
+              toolName: baselineClassification.toolName,
             },
             caseMemoryHints:
               deterministic.retrievedCaseMemory?.map((item) => ({
@@ -1222,7 +1223,7 @@ export class SemanticRouterService {
           : candidate,
     );
     const divergence = this.buildDivergence(
-      request.legacyClassification,
+      baselineClassification,
       semanticIntent,
       routeDecision,
     );
@@ -1253,6 +1254,7 @@ export class SemanticRouterService {
     SemanticRoutingEvaluation,
     "versionInfo" | "latencyMs" | "llmUsed" | "llmError"
   > {
+    const baselineClassification = request.baselineClassification;
     if (retrievedCaseMemory.length === 0) {
       return deterministic;
     }
@@ -1318,7 +1320,7 @@ export class SemanticRouterService {
         intent: this.resolveIntentFromCaseMemory(topCase),
         toolName: topCase.routeDecision.eligibleTools[0] ?? null,
         confidence: Number(topCase.similarityScore.toFixed(2)),
-        method: "semantic_router_shadow",
+        method: "semantic_route_shadow",
         reason: `semantic_router:case_memory_safe_override`,
       };
       requestedToolCalls = [];
@@ -1332,14 +1334,14 @@ export class SemanticRouterService {
       routeDecision,
       candidateRoutes,
       classification: promotedPrimary
-        ? { ...classification, method: "semantic_router_primary" }
+        ? { ...classification, method: "semantic_route_primary" }
         : classification,
       requestedToolCalls,
       sliceId,
       promotedPrimary,
       executionPath: promotedPrimary
-        ? "semantic_router_primary"
-        : "semantic_router_shadow",
+        ? "semantic_route_primary"
+        : "semantic_route_shadow",
       routingContext: {
         source: promotedPrimary ? "primary" : "shadow",
         promotedPrimary,
@@ -1352,7 +1354,7 @@ export class SemanticRouterService {
       },
       retrievedCaseMemory,
       divergence: this.buildDivergence(
-        request.legacyClassification,
+        baselineClassification,
         semanticIntent,
         routeDecision,
       ),
@@ -1427,9 +1429,10 @@ export class SemanticRouterService {
   }
 
   private collectToolIdentifiers(request: SemanticRoutingRequest): string[] {
+    const baselineClassification = request.baselineClassification;
     const toolNames = request.requestedToolCalls.map((call) => call.name);
-    if (request.legacyClassification.toolName) {
-      toolNames.push(request.legacyClassification.toolName);
+    if (baselineClassification.toolName) {
+      toolNames.push(baselineClassification.toolName);
     }
     const sliceId = this.resolveSliceId(
       request.message,
@@ -1472,15 +1475,15 @@ export class SemanticRouterService {
   }
 
   private buildDivergence(
-    legacyClassification: IntentClassification,
+    baselineClassification: IntentClassification,
     semanticIntent: SemanticIntent,
     routeDecision: RouteDecision,
   ): RoutingDivergence {
     const mismatchKinds: string[] = [];
-    const legacyRouteKey = [
-      legacyClassification.targetRole ?? "none",
-      legacyClassification.intent ?? "none",
-      legacyClassification.toolName ?? "none",
+    const baselineRouteKey = [
+      baselineClassification.targetRole ?? "none",
+      baselineClassification.intent ?? "none",
+      baselineClassification.toolName ?? "none",
     ].join(":");
     const semanticRouteKey = [
       semanticIntent.domain,
@@ -1490,15 +1493,15 @@ export class SemanticRouterService {
       routeDecision.eligibleTools.join("|") || "none",
     ].join(":");
 
-    if (legacyClassification.targetRole !== null) {
+    if (baselineClassification.targetRole !== null) {
       if (
-        legacyClassification.targetRole === "agronomist" &&
+        baselineClassification.targetRole === "agronomist" &&
         semanticIntent.domain !== RoutingDomain.Agro
       ) {
         mismatchKinds.push("domain");
       }
       if (
-        legacyClassification.targetRole !== "agronomist" &&
+        baselineClassification.targetRole !== "agronomist" &&
         semanticIntent.domain === RoutingDomain.Agro
       ) {
         mismatchKinds.push("target_role");
@@ -1506,20 +1509,20 @@ export class SemanticRouterService {
     }
 
     if (
-      legacyClassification.toolName === RaiToolName.GenerateTechMapDraft &&
+      baselineClassification.toolName === RaiToolName.GenerateTechMapDraft &&
       routeDecision.decisionType === DecisionType.Navigate
     ) {
       mismatchKinds.push("legacy_write_vs_semantic_read");
     }
     if (
-      legacyClassification.toolName !== null &&
+      baselineClassification.toolName !== null &&
       routeDecision.eligibleTools.length > 0 &&
-      !routeDecision.eligibleTools.includes(legacyClassification.toolName)
+      !routeDecision.eligibleTools.includes(baselineClassification.toolName)
     ) {
       mismatchKinds.push("tool_name");
     }
     if (
-      legacyClassification.toolName === null &&
+      baselineClassification.toolName === null &&
       routeDecision.eligibleTools.length > 0 &&
       routeDecision.decisionType === DecisionType.Execute
     ) {
@@ -1527,7 +1530,7 @@ export class SemanticRouterService {
     }
     if (
       routeDecision.decisionType === DecisionType.Abstain &&
-      legacyClassification.toolName
+      baselineClassification.toolName
     ) {
       mismatchKinds.push("abstain_vs_execute");
     }
@@ -1536,26 +1539,26 @@ export class SemanticRouterService {
       isMismatch: mismatchKinds.length > 0,
       mismatchKinds,
       summary: mismatchKinds.length > 0 ? mismatchKinds.join(",") : "match",
-      legacyRouteKey,
+      baselineRouteKey,
       semanticRouteKey,
     };
   }
 
-  private buildLegacyCandidates(
-    legacyClassification: IntentClassification,
+  private buildBaselineCandidates(
+    baselineClassification: IntentClassification,
   ): RoutingCandidate[] {
     return [
       {
-        id: legacyClassification.intent ?? "legacy_unknown",
-        label: legacyClassification.intent ?? "legacy_unknown",
-        targetRole: legacyClassification.targetRole,
-        intent: legacyClassification.intent,
-        toolName: legacyClassification.toolName,
-        decisionType: legacyClassification.toolName
+        id: baselineClassification.intent ?? "baseline_unknown",
+        label: baselineClassification.intent ?? "baseline_unknown",
+        targetRole: baselineClassification.targetRole,
+        intent: baselineClassification.intent,
+        toolName: baselineClassification.toolName,
+        decisionType: baselineClassification.toolName
           ? DecisionType.Execute
           : DecisionType.Abstain,
-        score: Math.max(legacyClassification.confidence, 0.1),
-        reason: legacyClassification.reason,
+        score: Math.max(baselineClassification.confidence, 0.1),
+        reason: baselineClassification.reason,
       },
     ];
   }
@@ -2417,28 +2420,28 @@ export class SemanticRouterService {
     };
   }
 
-  private mapDomainFromLegacy(
-    legacyClassification: IntentClassification,
+  private mapDomainFromBaseline(
+    baselineClassification: IntentClassification,
   ): RoutingDomain {
-    if (legacyClassification.targetRole === "agronomist") {
+    if (baselineClassification.targetRole === "agronomist") {
       return RoutingDomain.Agro;
     }
-    if (legacyClassification.targetRole === "economist") {
+    if (baselineClassification.targetRole === "economist") {
       return RoutingDomain.Finance;
     }
-    if (legacyClassification.targetRole === "crm_agent") {
+    if (baselineClassification.targetRole === "crm_agent") {
       return RoutingDomain.Crm;
     }
-    if (legacyClassification.targetRole === "contracts_agent") {
+    if (baselineClassification.targetRole === "contracts_agent") {
       return RoutingDomain.Contracts;
     }
-    if (legacyClassification.targetRole === "front_office_agent") {
+    if (baselineClassification.targetRole === "front_office_agent") {
       return RoutingDomain.FrontOffice;
     }
-    if (legacyClassification.targetRole === "monitoring") {
+    if (baselineClassification.targetRole === "monitoring") {
       return RoutingDomain.Monitoring;
     }
-    if (legacyClassification.targetRole === "knowledge") {
+    if (baselineClassification.targetRole === "knowledge") {
       return RoutingDomain.Knowledge;
     }
     return RoutingDomain.Unknown;

@@ -30,6 +30,7 @@ describe('AiChatStore UX modes', () => {
                     activeWindowId: null,
                     collapsedWindowIds: [],
                     pendingClarification: null,
+                    plannerMutationResume: null,
                 },
             ],
             threadId: null,
@@ -43,6 +44,7 @@ describe('AiChatStore UX modes', () => {
             activeWindowId: null,
             collapsedWindowIds: [],
             pendingClarification: null,
+            plannerMutationResume: null,
             resumeInFlight: false,
             isLoading: false,
             abortController: null,
@@ -214,6 +216,81 @@ describe('AiChatStore UX modes', () => {
             },
         ]);
         expect(useAiChatStore.getState().sessions[0].threadId).toBe('thread-1');
+    });
+
+    it('ставит plannerMutationResume из executionExplainability и шлёт resume на следующий запрос', async () => {
+        fetchMock
+            .mockResolvedValueOnce({
+                ok: true,
+                json: async () => ({
+                    text: 'Нужно подтверждение человека.',
+                    widgets: [],
+                    memoryUsed: [],
+                    threadId: 'thread-plan',
+                    executionExplainability: {
+                        version: 'v1',
+                        branches: [
+                            {
+                                branchId: 'b1',
+                                lifecycle: 'BLOCKED_ON_CONFIRMATION',
+                                mutationState: 'PENDING',
+                                policyDecision: 'confirm',
+                                pendingActionId: 'pa-plan-1',
+                            },
+                        ],
+                    },
+                }),
+            })
+            .mockResolvedValueOnce({
+                ok: true,
+                json: async () => ({
+                    text: 'Продолжаю выполнение.',
+                    widgets: [],
+                    memoryUsed: [],
+                    threadId: 'thread-plan',
+                    executionExplainability: {
+                        version: 'v1',
+                        branches: [
+                            {
+                                branchId: 'b1',
+                                lifecycle: 'RUNNING',
+                                mutationState: 'APPROVED',
+                                policyDecision: 'execute',
+                            },
+                        ],
+                    },
+                }),
+            });
+
+        useAiChatStore.setState({ fsmState: 'open', threadId: null });
+        useWorkspaceContextStore.setState({
+            context: { route: '/registry/fields' },
+        });
+
+        await act(async () => {
+            await useAiChatStore.getState().sendMessage('Запусти write');
+        });
+
+        expect(useAiChatStore.getState().plannerMutationResume).toEqual({
+            pendingActionId: 'pa-plan-1',
+        });
+        expect(useAiChatStore.getState().threadId).toBe('thread-plan');
+
+        await act(async () => {
+            await useAiChatStore.getState().sendMessage('продолжи');
+        });
+
+        const secondCall = fetchMock.mock.calls[1]?.[1] as RequestInit | undefined;
+        const secondBody = secondCall?.body ? JSON.parse(secondCall.body as string) : null;
+        expect(secondBody).toEqual(
+            expect.objectContaining({
+                threadId: 'thread-plan',
+                message: 'продолжи',
+                executionPlannerMutationApproved: true,
+                executionPlannerApprovedPendingActionId: 'pa-plan-1',
+            }),
+        );
+        expect(useAiChatStore.getState().plannerMutationResume).toBeNull();
     });
 
     it('derives trust summary, trust windows and trust signals from branch trust artifacts', async () => {
@@ -528,6 +605,7 @@ describe('AiChatStore UX modes', () => {
                     activeWindowId: null,
                     collapsedWindowIds: [],
                     pendingClarification: null,
+                    plannerMutationResume: null,
                 },
                 {
                     sessionId: 'chat-1',
@@ -547,6 +625,7 @@ describe('AiChatStore UX modes', () => {
                     activeWindowId: null,
                     collapsedWindowIds: [],
                     pendingClarification: null,
+                    plannerMutationResume: null,
                 },
             ],
         });
@@ -619,6 +698,7 @@ describe('AiChatStore UX modes', () => {
                             missingKeys: ['fieldRef', 'seasonRef'],
                             collectedContext: {},
                         },
+                        plannerMutationResume: null,
                     },
                 ],
                 messages: [
@@ -654,6 +734,7 @@ describe('AiChatStore UX modes', () => {
                     missingKeys: ['fieldRef', 'seasonRef'],
                     collectedContext: {},
                 },
+                plannerMutationResume: null,
             },
             version: 0,
         });
@@ -672,6 +753,7 @@ describe('AiChatStore UX modes', () => {
                     activeWindowId: null,
                     collapsedWindowIds: [],
                     pendingClarification: null,
+                    plannerMutationResume: null,
                 },
             ],
             threadId: null,
@@ -681,6 +763,7 @@ describe('AiChatStore UX modes', () => {
             activeWindowId: null,
             collapsedWindowIds: [],
             pendingClarification: null,
+            plannerMutationResume: null,
         });
 
         localStorage.setItem('rai-ai-chat-storage', persistedSnapshot);

@@ -19,7 +19,7 @@ interface RetrieveRelevantCasesParams {
   companyId: string;
   message: string;
   workspaceContext?: WorkspaceContextDto;
-  legacyClassification: IntentClassification;
+  baselineClassification?: IntentClassification;
   semanticIntent: SemanticIntent;
   routeDecision: RouteDecision;
   sliceId?: string | null;
@@ -96,8 +96,9 @@ export class RoutingCaseMemoryService {
     const requestedSliceId =
       params.sliceId ??
       this.inferSliceId(params.workspaceContext?.route, params.message);
+    const baselineClassification = params.baselineClassification!;
     const requestedTargetRole =
-      params.legacyClassification.targetRole ?? "unknown";
+      baselineClassification.targetRole ?? "unknown";
     const queryTokens = this.tokenize(params.message);
 
     const candidates: RoutingCaseMemoryRetrievedCase[] = [];

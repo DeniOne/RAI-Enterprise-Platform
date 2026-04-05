@@ -128,7 +128,7 @@ interface RoutingDivergenceData {
     count: number;
   }>;
   collisionMatrix: Array<{
-    legacyRouteKey: string;
+    baselineRouteKey: string;
     semanticRouteKey: string;
     count: number;
   }>;

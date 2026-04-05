@@ -30,7 +30,7 @@ describe("SemanticRouterService", () => {
       } as any,
       traceId: "tr-1",
       threadId: "th-1",
-      legacyClassification: {
+      baselineClassification: {
         targetRole: "agronomist",
         intent: "tech_map_draft",
         toolName: RaiToolName.GenerateTechMapDraft,
@@ -49,7 +49,7 @@ describe("SemanticRouterService", () => {
 
     expect(result.promotedPrimary).toBe(true);
     expect(result.routeDecision.decisionType).toBe("navigate");
-    expect(result.classification.method).toBe("semantic_router_primary");
+    expect(result.classification.method).toBe("semantic_route_primary");
     expect(result.requestedToolCalls).toEqual([]);
     expect(result.divergence.isMismatch).toBe(true);
     expect(result.divergence.mismatchKinds).toContain(
@@ -70,7 +70,7 @@ describe("SemanticRouterService", () => {
       } as any,
       traceId: "tr-2",
       threadId: "th-2",
-      legacyClassification: {
+      baselineClassification: {
         targetRole: "agronomist",
         intent: "tech_map_draft",
         toolName: RaiToolName.GenerateTechMapDraft,
@@ -109,7 +109,7 @@ describe("SemanticRouterService", () => {
       } as any,
       traceId: "tr-dev-1",
       threadId: "th-dev-1",
-      legacyClassification: {
+      baselineClassification: {
         targetRole: "agronomist",
         intent: "compute_deviations",
         toolName: RaiToolName.ComputeDeviations,
@@ -123,8 +123,8 @@ describe("SemanticRouterService", () => {
 
     expect(result.sliceId).toBe("agro.deviations.review");
     expect(result.promotedPrimary).toBe(true);
-    expect(result.executionPath).toBe("semantic_router_primary");
-    expect(result.classification.method).toBe("semantic_router_primary");
+    expect(result.executionPath).toBe("semantic_route_primary");
+    expect(result.classification.method).toBe("semantic_route_primary");
     expect(result.routeDecision.decisionType).toBe("execute");
     expect(result.requestedToolCalls).toEqual([
       {
@@ -157,7 +157,7 @@ describe("SemanticRouterService", () => {
       } as any,
       traceId: "tr-planfact-1",
       threadId: "th-planfact-1",
-      legacyClassification: {
+      baselineClassification: {
         targetRole: "economist",
         intent: "compute_plan_fact",
         toolName: RaiToolName.ComputePlanFact,
@@ -171,8 +171,8 @@ describe("SemanticRouterService", () => {
 
     expect(result.sliceId).toBe("finance.plan-fact.read");
     expect(result.promotedPrimary).toBe(true);
-    expect(result.executionPath).toBe("semantic_router_primary");
-    expect(result.classification.method).toBe("semantic_router_primary");
+    expect(result.executionPath).toBe("semantic_route_primary");
+    expect(result.classification.method).toBe("semantic_route_primary");
     expect(result.routeDecision.decisionType).toBe("execute");
     expect(result.requestedToolCalls).toEqual([
       {
@@ -199,7 +199,7 @@ describe("SemanticRouterService", () => {
       } as any,
       traceId: "tr-planfact-2",
       threadId: "th-planfact-2",
-      legacyClassification: {
+      baselineClassification: {
         targetRole: "economist",
         intent: "compute_plan_fact",
         toolName: RaiToolName.ComputePlanFact,
@@ -232,7 +232,7 @@ describe("SemanticRouterService", () => {
       } as any,
       traceId: "tr-planfact-1b",
       threadId: "th-planfact-1b",
-      legacyClassification: {
+      baselineClassification: {
         targetRole: "economist",
         intent: "compute_plan_fact",
         toolName: RaiToolName.ComputePlanFact,
@@ -246,8 +246,8 @@ describe("SemanticRouterService", () => {
 
     expect(result.sliceId).toBe("finance.plan-fact.read");
     expect(result.promotedPrimary).toBe(true);
-    expect(result.executionPath).toBe("semantic_router_primary");
-    expect(result.classification.method).toBe("semantic_router_primary");
+    expect(result.executionPath).toBe("semantic_route_primary");
+    expect(result.classification.method).toBe("semantic_route_primary");
     expect(result.routeDecision.decisionType).toBe("execute");
     expect(result.requestedToolCalls).toEqual([
       {
@@ -275,7 +275,7 @@ describe("SemanticRouterService", () => {
       } as any,
       traceId: "tr-scenario-1",
       threadId: "th-scenario-1",
-      legacyClassification: {
+      baselineClassification: {
         targetRole: "economist",
         intent: "simulate_scenario",
         toolName: RaiToolName.SimulateScenario,
@@ -289,7 +289,7 @@ describe("SemanticRouterService", () => {
 
     expect(result.sliceId).toBe("finance.scenario.analysis");
     expect(result.promotedPrimary).toBe(true);
-    expect(result.executionPath).toBe("semantic_router_primary");
+    expect(result.executionPath).toBe("semantic_route_primary");
     expect(result.classification.intent).toBe("simulate_scenario");
     expect(result.routeDecision.decisionType).toBe("execute");
     expect(result.requestedToolCalls).toEqual([
@@ -316,7 +316,7 @@ describe("SemanticRouterService", () => {
       } as any,
       traceId: "tr-risk-1",
       threadId: "th-risk-1",
-      legacyClassification: {
+      baselineClassification: {
         targetRole: "economist",
         intent: "compute_risk_assessment",
         toolName: RaiToolName.ComputeRiskAssessment,
@@ -330,7 +330,7 @@ describe("SemanticRouterService", () => {
 
     expect(result.sliceId).toBe("finance.risk.analysis");
     expect(result.promotedPrimary).toBe(true);
-    expect(result.executionPath).toBe("semantic_router_primary");
+    expect(result.executionPath).toBe("semantic_route_primary");
     expect(result.classification.intent).toBe("compute_risk_assessment");
     expect(result.routeDecision.decisionType).toBe("execute");
     expect(result.requestedToolCalls).toEqual([
@@ -359,7 +359,7 @@ describe("SemanticRouterService", () => {
       } as any,
       traceId: "tr-crm-1",
       threadId: "th-crm-1",
-      legacyClassification: {
+      baselineClassification: {
         targetRole: "crm_agent",
         intent: "review_account_workspace",
         toolName: RaiToolName.GetCrmAccountWorkspace,
@@ -373,7 +373,7 @@ describe("SemanticRouterService", () => {
 
     expect(result.sliceId).toBe("crm.account.workspace-review");
     expect(result.promotedPrimary).toBe(true);
-    expect(result.executionPath).toBe("semantic_router_primary");
+    expect(result.executionPath).toBe("semantic_route_primary");
     expect(result.classification.intent).toBe("review_account_workspace");
     expect(result.routeDecision.decisionType).toBe("execute");
     expect(result.requestedToolCalls).toEqual([
@@ -395,7 +395,7 @@ describe("SemanticRouterService", () => {
       } as any,
       traceId: "tr-crm-2",
       threadId: "th-crm-2",
-      legacyClassification: {
+      baselineClassification: {
         targetRole: "crm_agent",
         intent: "review_account_workspace",
         toolName: RaiToolName.GetCrmAccountWorkspace,
@@ -409,7 +409,7 @@ describe("SemanticRouterService", () => {
 
     expect(result.sliceId).toBe("crm.account.workspace-review");
     expect(result.promotedPrimary).toBe(true);
-    expect(result.executionPath).toBe("semantic_router_primary");
+    expect(result.executionPath).toBe("semantic_route_primary");
     expect(result.classification.intent).toBe("review_account_workspace");
     expect(result.routeDecision.decisionType).toBe("execute");
     expect(result.requestedToolCalls).toEqual([
@@ -431,7 +431,7 @@ describe("SemanticRouterService", () => {
       } as any,
       traceId: "tr-crm-3",
       threadId: "th-crm-3",
-      legacyClassification: {
+      baselineClassification: {
         targetRole: "crm_agent",
         intent: "review_account_workspace",
         toolName: RaiToolName.GetCrmAccountWorkspace,
@@ -457,7 +457,7 @@ describe("SemanticRouterService", () => {
       workspaceContext: {} as any,
       traceId: "tr-crm-2b",
       threadId: "th-crm-2b",
-      legacyClassification: {
+      baselineClassification: {
         targetRole: "crm_agent",
         intent: "review_account_workspace",
         toolName: RaiToolName.GetCrmAccountWorkspace,
@@ -471,7 +471,7 @@ describe("SemanticRouterService", () => {
 
     expect(result.sliceId).toBe("crm.account.workspace-review");
     expect(result.promotedPrimary).toBe(true);
-    expect(result.executionPath).toBe("semantic_router_primary");
+    expect(result.executionPath).toBe("semantic_route_primary");
     expect(result.classification.intent).toBe("review_account_workspace");
     expect(result.routeDecision.decisionType).toBe("execute");
     expect(result.requestedToolCalls).toEqual([
@@ -493,7 +493,7 @@ describe("SemanticRouterService", () => {
       } as any,
       traceId: "tr-crm-inn-1",
       threadId: "th-crm-inn-1",
-      legacyClassification: {
+      baselineClassification: {
         targetRole: "crm_agent",
         intent: "register_counterparty",
         toolName: RaiToolName.RegisterCounterparty,
@@ -507,7 +507,7 @@ describe("SemanticRouterService", () => {
 
     expect(result.sliceId).toBe("crm.counterparty.lookup");
     expect(result.promotedPrimary).toBe(true);
-    expect(result.executionPath).toBe("semantic_router_primary");
+    expect(result.executionPath).toBe("semantic_route_primary");
     expect(result.classification.intent).toBe("lookup_counterparty_by_inn");
     expect(result.routeDecision.decisionType).toBe("execute");
     expect(result.requestedToolCalls).toEqual([
@@ -529,7 +529,7 @@ describe("SemanticRouterService", () => {
       } as any,
       traceId: "tr-crm-inn-2",
       threadId: "th-crm-inn-2",
-      legacyClassification: {
+      baselineClassification: {
         targetRole: "crm_agent",
         intent: "register_counterparty",
         toolName: RaiToolName.RegisterCounterparty,
@@ -543,7 +543,7 @@ describe("SemanticRouterService", () => {
 
     expect(result.sliceId).toBe("crm.counterparty.lookup");
     expect(result.promotedPrimary).toBe(true);
-    expect(result.executionPath).toBe("semantic_router_primary");
+    expect(result.executionPath).toBe("semantic_route_primary");
     expect(result.classification.intent).toBe("lookup_counterparty_by_inn");
     expect(result.routeDecision.decisionType).toBe("clarify");
     expect(result.routeDecision.requiredContextMissing).toEqual(["inn"]);
@@ -559,7 +559,7 @@ describe("SemanticRouterService", () => {
       } as any,
       traceId: "tr-dev-2",
       threadId: "th-dev-2",
-      legacyClassification: {
+      baselineClassification: {
         targetRole: "agronomist",
         intent: "compute_deviations",
         toolName: RaiToolName.ComputeDeviations,
@@ -573,7 +573,7 @@ describe("SemanticRouterService", () => {
 
     expect(result.sliceId).toBe("agro.deviations.review");
     expect(result.promotedPrimary).toBe(true);
-    expect(result.executionPath).toBe("semantic_router_primary");
+    expect(result.executionPath).toBe("semantic_route_primary");
     expect(result.classification.intent).toBe("compute_deviations");
     expect(result.routeDecision.decisionType).toBe("execute");
   });
@@ -587,7 +587,7 @@ describe("SemanticRouterService", () => {
       } as any,
       traceId: "tr-crm-inn-3",
       threadId: "th-crm-inn-3",
-      legacyClassification: {
+      baselineClassification: {
         targetRole: "crm_agent",
         intent: "register_counterparty",
         toolName: RaiToolName.RegisterCounterparty,
@@ -687,7 +687,7 @@ describe("SemanticRouterService", () => {
       } as any,
       traceId: "tr-3",
       threadId: "th-3",
-      legacyClassification: {
+      baselineClassification: {
         targetRole: "knowledge",
         intent: null,
         toolName: null,
@@ -769,7 +769,7 @@ describe("SemanticRouterService", () => {
       } as any,
       traceId: "tr-4",
       threadId: "th-4",
-      legacyClassification: {
+      baselineClassification: {
         targetRole: "knowledge",
         intent: null,
         toolName: null,
@@ -796,7 +796,7 @@ describe("SemanticRouterService", () => {
       } as any,
       traceId: "tr-knowledge-1",
       threadId: "th-knowledge-1",
-      legacyClassification: {
+      baselineClassification: {
         targetRole: "agronomist",
         intent: "tech_map_draft",
         toolName: RaiToolName.GenerateTechMapDraft,
@@ -810,7 +810,7 @@ describe("SemanticRouterService", () => {
 
     expect(result.sliceId).toBe("knowledge.base.query");
     expect(result.promotedPrimary).toBe(true);
-    expect(result.executionPath).toBe("semantic_router_primary");
+    expect(result.executionPath).toBe("semantic_route_primary");
     expect(result.classification.intent).toBe("query_knowledge");
     expect(result.routeDecision.decisionType).toBe("execute");
     expect(result.requestedToolCalls).toEqual([
@@ -833,7 +833,7 @@ describe("SemanticRouterService", () => {
       } as any,
       traceId: "tr-knowledge-2",
       threadId: "th-knowledge-2",
-      legacyClassification: {
+      baselineClassification: {
         targetRole: "knowledge",
         intent: "query_knowledge",
         toolName: RaiToolName.QueryKnowledge,
@@ -847,7 +847,7 @@ describe("SemanticRouterService", () => {
 
     expect(result.sliceId).toBeNull();
     expect(result.promotedPrimary).toBe(false);
-    expect(result.executionPath).toBe("semantic_router_shadow");
+    expect(result.executionPath).toBe("semantic_route_shadow");
     expect(result.classification.intent).toBe("query_knowledge");
     expect(result.routeDecision.decisionType).toBe("abstain");
     expect(result.requestedToolCalls).toEqual([]);
@@ -863,7 +863,7 @@ describe("SemanticRouterService", () => {
       } as any,
       traceId: "tr-contracts-list-1",
       threadId: "th-contracts-list-1",
-      legacyClassification: {
+      baselineClassification: {
         targetRole: "contracts_agent",
         intent: "create_commerce_contract",
         toolName: RaiToolName.CreateCommerceContract,
@@ -877,7 +877,7 @@ describe("SemanticRouterService", () => {
 
     expect(result.sliceId).toBe("contracts.registry-review");
     expect(result.promotedPrimary).toBe(true);
-    expect(result.executionPath).toBe("semantic_router_primary");
+    expect(result.executionPath).toBe("semantic_route_primary");
     expect(result.classification.intent).toBe("list_commerce_contracts");
     expect(result.routeDecision.decisionType).toBe("execute");
     expect(result.requestedToolCalls).toEqual([
@@ -898,7 +898,7 @@ describe("SemanticRouterService", () => {
       } as any,
       traceId: "tr-contracts-review-1",
       threadId: "th-contracts-review-1",
-      legacyClassification: {
+      baselineClassification: {
         targetRole: "contracts_agent",
         intent: "list_commerce_contracts",
         toolName: RaiToolName.ListCommerceContracts,
@@ -912,7 +912,7 @@ describe("SemanticRouterService", () => {
 
     expect(result.sliceId).toBe("contracts.registry-review");
     expect(result.promotedPrimary).toBe(true);
-    expect(result.executionPath).toBe("semantic_router_primary");
+    expect(result.executionPath).toBe("semantic_route_primary");
     expect(result.classification.intent).toBe("review_commerce_contract");
     expect(result.routeDecision.decisionType).toBe("execute");
     expect(result.requestedToolCalls).toEqual([
@@ -937,7 +937,7 @@ describe("SemanticRouterService", () => {
       } as any,
       traceId: "tr-contracts-ar-1",
       threadId: "th-contracts-ar-1",
-      legacyClassification: {
+      baselineClassification: {
         targetRole: "contracts_agent",
         intent: "list_commerce_contracts",
         toolName: RaiToolName.ListCommerceContracts,
@@ -951,7 +951,7 @@ describe("SemanticRouterService", () => {
 
     expect(result.sliceId).toBe("contracts.ar-balance.review");
     expect(result.promotedPrimary).toBe(true);
-    expect(result.executionPath).toBe("semantic_router_primary");
+    expect(result.executionPath).toBe("semantic_route_primary");
     expect(result.classification.intent).toBe("review_ar_balance");
     expect(result.routeDecision.decisionType).toBe("execute");
     expect(result.requestedToolCalls).toEqual([
@@ -971,7 +971,7 @@ describe("SemanticRouterService", () => {
       } as any,
       traceId: "tr-contracts-ar-2",
       threadId: "th-contracts-ar-2",
-      legacyClassification: {
+      baselineClassification: {
         targetRole: "contracts_agent",
         intent: "review_ar_balance",
         toolName: RaiToolName.GetArBalance,
@@ -985,7 +985,7 @@ describe("SemanticRouterService", () => {
 
     expect(result.sliceId).toBe("contracts.ar-balance.review");
     expect(result.promotedPrimary).toBe(true);
-    expect(result.executionPath).toBe("semantic_router_primary");
+    expect(result.executionPath).toBe("semantic_route_primary");
     expect(result.classification.intent).toBe("review_ar_balance");
     expect(result.routeDecision.decisionType).toBe("clarify");
     expect(result.routeDecision.requiredContextMissing).toEqual(["invoiceId"]);

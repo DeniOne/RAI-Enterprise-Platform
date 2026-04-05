@@ -95,7 +95,7 @@ describe("RoutingCaseMemoryService", () => {
       workspaceContext: {
         route: "/consulting/techmaps",
       } as any,
-      legacyClassification: {
+      baselineClassification: {
         targetRole: "agronomist",
         intent: "tech_map_draft",
         toolName: "generate_tech_map_draft" as any,

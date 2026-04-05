@@ -1,4 +1,96 @@
+## Текущая задача (2026-04-04, blueprint repo-side full closeout)
+
+- `AgentExecutionResult.text` переведён из обязательного поля в optional summary; канонический structured-first resolver вынесен в `apps/api/src/shared/rai-chat/agent-execution-summary.ts`.
+- `ResponseComposerService` и `SupervisorAgent` больше не требуют prose как межагентную опору: summary строится из `structuredOutput`, `structuredOutputs`, branch artifacts и только потом, при наличии, использует `text`.
+- Planner-loop больше не отбрасывает чисто `tool-less` RUNNING-ветки в multi-branch плане; это зафиксировано в `supervisor-agent.service.spec.ts`. После добора control-tower web smoke и explainability/pending-action тестов blueprint синхронизирован как repo-side closed bridge, а execution closeout переведён из slice-signoff в полный repo-side sign-off.
+
+## Текущая задача (2026-04-04, planner mutation resume e2e)
+
+- Planner runtime теперь доказан не только для multi-explicit и `TechMap`, но и для governed mutation-resume цикла: `BLOCKED_ON_CONFIRMATION -> APPROVED_FINAL -> resumed branch -> carry-forward next branch`.
+- `runtime-spine.integration.spec.ts` подтверждает трёхтиковый thread-slice: первая ветка уходит в `pendingActionId`, второй тик после `executionPlannerMutationApproved + executionPlannerApprovedPendingActionId` завершает resumed branch, третий тик поднимает следующую ветку плана.
+- Следующий реальный разрыв до идеала теперь уже не в самом resume-механизме, а в truly-universal `mixed` loop и в отдельном chat-UX для approve-only сценария.
+
+## Текущая задача (2026-04-04, tech-map tool-less clarify branch)
+
+- `executePlannerBranchesForTick` теперь работает не только для multi-explicit non-composite, но и для `TechMap` planner-графа: `tech_map_core` исполняется через отдельный `executeAgent`, а `tech_map_clarify` синхронизируется как virtual branch без второго runtime-вызова.
+- Агрегированный planner-result теперь сохраняет базовый `structuredOutput` core-ветки, поэтому `applyTechMapWorkflowFrame` по-прежнему видит `clarifyBatch` / `workflowResumeState` и не теряет governed clarify lifecycle.
+- На planner surface это дало честное состояние `tech_map_core=COMPLETED`, `tech_map_clarify=RUNNING` при открытом clarify-batch. Следующий разрыв до идеала сузился до универсального loop для `mixed`, `blocking_on_confirmation` и других произвольных tool-less веток.
+
+## Текущая задача (2026-04-04, non-composite planner branch-driven tick)
+
+- `SupervisorAgent.executePlannerBranchesForTick` перевёл multi-branch non-composite planner path на branch-by-branch исполнение: каждая `RUNNING` ветка текущего тика получает отдельный `executeAgent` с собственным `role` и `requestedTools`.
+- Branch runtime в этом пути теперь нормализует per-branch `toolCalls`, агрегирует `branchResults` / `branchTrustAssessments` / `branchCompositions` и **не** схлопывает multi-explicit запрос обратно в один пакетный runtime-call.
+- Carry-forward модель сохранена осознанно: branch-driven тик завершает только ветки, которые уже были `RUNNING` на старте сообщения; новые runnable ветки продвигаются следующим сообщением / тиком. Следующий разрыв до идеала — универсальный planner-loop для `mixed`, `TechMap` и веток без `toolName`.
+
+## Текущая задача (2026-04-04, generic composite planner execution)
+
+- `CompositeWorkflowStageContract` получил `payloadBindings`, а `composite-stage-payload-resolver.ts` стал каноническим местом для сборки stage-payload из `structuredOutput` предыдущих стадий.
+- `SupervisorAgent.applyCompositeWorkflowStage` больше не держит CRM/agro-specific orchestration: composite runtime переведён на общий stage-driven path с `finalizeNamedBranchFromExecution` и branch-level pulse planner surface.
+- Blueprint `Track 2` и критерий `(2)` можно считать частично закрытыми именно как removal of stitched composite hardcode; универсальный planner-only loop для non-composite / mixed flows остаётся следующим разрывом.
+
+## Текущая задача (2026-04-04, blueprint governance realignment)
+
+- `rai_ep_agent_system_target_implementation_blueprint.md` возвращён к роли strategy bridge: `verified_by` снова `manual`, sign-off вынесен из `00_STRATEGY`.
+- Создан execution closeout-документ `docs/07_EXECUTION/AGENT_TARGET_BLUEPRINT_IMPLEMENTATION_SLICE_CLOSEOUT_2026-04-04.md` для repo-side delivery-среза.
+- `INDEX.md` и `DOCS_MATRIX.md` выровнены так, чтобы `ACTIVE BRIDGE` больше не несли внутри себя delivery closeout как стратегическую истину.
+
+## Текущая задача (2026-04-04, audit graph-only snapshot v1)
+
+- `buildControlTowerSubIntentGraphSnapshotV1` (`control-tower-planner-envelope.ts`) → `metadata.controlTowerSubIntentGraphSnapshot` в `writeAiAuditEntry` (`supervisor-forensics.service.ts`), вызов из `SupervisorAgent` после envelope. Спеки + HTTP planner smoke обновлены. Blueprint Track 1: graph-only поле — `[x]`.
+
+## Текущая задача (2026-04-04, blueprint implementation slice sign-off)
+
+- `docs/00_STRATEGY/STAGE 2/rai_ep_agent_system_target_implementation_blueprint.md` v1.26.0: `status: active`, раздел **«Закрытие пакета (sign-off)»** — чеклист внедрения закрыт на 2026-04-04; `[~]`/`[ ]` зафиксированы как хвосты и post-blueprint. `INDEX.md`: ACTIVE BRIDGE с пометкой closed slice. `DOCS_MATRIX.md`: `last_verified` claim blueprint обновлён.
+
+## Текущая задача (2026-04-04, live API smoke / RAI chat body whitelist)
+
+- `apps/api/test/a_rai-live-api-smoke.spec.ts`: resume tech_map (и HTTP e2e «planner + audit») — в `workspaceContext.activeEntityRefs` только поля из `WorkspaceEntityRefDto` (`kind`, `id`). Поле `label` и любые прочие лишние ключи на вложенных DTO ломают `RaiChatController` `ValidationPipe` (`forbidNonWhitelisted`) → **400 Bad Request**, без связи с планировщиком.
+- `ClarificationResumeCollectedContextDto`: добавлены опциональные `batchId`, `itemId`, `uom`, `qty` — паритет с `buildResumeExecutionPlan` для `create_fulfillment_event`; иначе smoke resume «фиксирует исполнение» получал 400.
+
+## Текущая задача (2026-04-07, control tower planner envelope v1)
+
+- `control-tower-planner-envelope.ts`: `buildControlTowerPlannerEnvelopeV1` — в `ai_audit_entry.metadata.controlTowerPlannerEnvelope` на каждом live-запросе (не `replayMode`): `schemaVersion`, `traceId`, `companyId`, `promotion` (`planner-promotion-policy`), `plannerSignals` (graphId, branchCount, флаги plan/surface, `telemetryPresent`). Детали веток — по-прежнему `plannerBranchTelemetry`. Гейт `pnpm gate:api:control-tower-planner-envelope`; тесты в `supervisor-agent.service.spec.ts` (планировщик on/off).
+
+## Текущая задача (2026-04-05, planner promote canary / rollback)
+
+- `planner-promotion-policy.ts`: `resolvePlannerRuntimePathEnabled({ env, companyId })` — приоритет `RAI_PLANNER_ROLLBACK` → `RAI_PLANNER_RUNTIME_ENABLED` → allowlist `RAI_PLANNER_CANARY_COMPANY_IDS` → `RAI_PLANNER_CANARY_PERCENT` (0–100, bucket от `companyId`) → full rollout. `SupervisorAgent` заменяет прямые проверки env; `pulsePlannerSurfaceForCompositeStep` учитывает флаг; в audit `plannerBranchTelemetry` добавляется `plannerPromotion`. Гейт `pnpm gate:api:planner-promotion-policy`.
+
+## Текущая задача (2026-04-05, TechMap loop state snapshot)
+
+- Интеграционный тест `apps/api/src/modules/rai-chat/runtime/tech-map-loop-state-object.integration.spec.ts`: единый `TechMapLoopStateSnapshotV1` (ingress + planner surface + hook на `compute_deviations` + ожидаемый артефакт). Параметры `buildFrame`: `eval/tech-map-rebuild-draft-ingress.params.ts` (паритет с `semantic-ingress.service.spec` rebuild workflow). Без сети и без `executeAgent`.
+
+## Текущая задача (2026-04-04, model-routing baseline CI)
+
+- Gate `pnpm gate:api:model-routing-baseline`: `eval/model-routing.baseline.ts` + `model-routing.baseline.spec.ts`, общая фикстура `model-routing.fixtures.ts` с `model-routing.regression.eval.spec.ts`. Проверки: p95 времени локального `buildExecutionPlanFromIngress` + `computeTopologicalScheduleOrder` (порог `RAI_MODEL_ROUTING_BASELINE_P95_MS_MAX`, default 300 ms); «cost» = сумма `(1 + dependsOn.length)` по веткам для микро-фикстуры (=1). Без LLM и сети.
+
+## Текущая задача (2026-04-03, BranchVerdict без сети)
+
+- Правила агрегации `BranchVerdict` вынесены в `apps/api/src/shared/rai-chat/branch-verdict-rules.ts`; табличные кейсы — `branch-verdict-rules.spec.ts`; `TruthfulnessEngineService` и `ResponseComposerService` вызывают эти функции. Гейт: `pnpm gate:api:branch-verdict-rules` (скрипт `test:branch-verdict-rules` в `apps/api`).
+
+## Текущая задача (2026-04-04, planner thread persist + mutation resume)
+
+- Опциональная персистенция среза планировщика по `(companyId, threadId)`: env `RAI_PLANNER_THREAD_PERSIST=true`, Prisma-модель `RaiPlannerThreadState` / таблица `rai_planner_thread_states`, миграция `20260404120000_rai_planner_thread_states`. `BranchStatePlaneService.getThreadPlannerSlice` / `recordThreadPlannerSlice` — async; при ошибке БД лог и in-memory фолбэк.
+- Resume после блокировки на подтверждении мутации: в `RaiChatRequestDto` флаг `executionPlannerMutationApproved`; при наличии на поверхности `pendingActionId` (из `riskPolicyBlocked` + `actionId` тула) требуется `executionPlannerApprovedPendingActionId` и проверка `PendingActionService.assertApprovedFinalForPlannerResume` (статус `APPROVED_FINAL` по компании). `finalizeSurfaceFromExecution` принимает `executionPlan` и ставит `pendingActionId` по ветке с соответствующим `toolName`; без плана — прежнее грубое «любой risk → все RUNNING в BLOCKED». `applyPlannerMutationApprovalToSurface(surface, approvedId?)` снимает блок только для совпадающего id. Explainability в ответе может содержать `pendingActionId`.
+- Web: `apps/web/lib/api.ts` + `ai-chat-store` — при ответе с `executionExplainability` (ветка `BLOCKED_ON_CONFIRMATION` + `PENDING` + `pendingActionId`) сохраняется `plannerMutationResume`; следующий POST в `/api/rai/chat` добавляет поля resume; `AiChatPanel` — баннер и ссылка на `/control-tower`, `dismissPlannerMutationResume`.
+- `RaiChatController`: `ValidationPipe` с `whitelist` + `forbidNonWhitelisted` на уровне контроллера; тест `rai-chat.request-body.validation.spec.ts` (отсев поддельного `executionSurface` и прочих лишних полей тела).
+- Web smoke чата: `apps/web/__tests__/rai-chat-thread-response-smoke.spec.ts`; гейт `pnpm gate:web:rai-chat-smoke`; шаг в `.github/workflows/invariant-gates.yml`.
+- В тот же workflow добавлен шаг `pnpm lint:ui-language` (аудит видимого русского в web по `scripts/ui-language-audit.cjs`).
+
 ## Текущая задача (2026-04-03, Stage 2 blueprint alignment)
+
+- (2026-04-04) `rai_ep_agent_system_target_implementation_blueprint.md` v1.20.0: отметки `[x]` / `[~]` / `[ ]` строго по **реализации + тестам/gates** в репозитории; раздел «Соответствие коду»; `verified_by: code|tests`; `docs/DOCS_MATRIX.md` для claim blueprint обновлён. Ручная приёмка без артефакта в репо не переводит строку в `[x]`.
+
+## Runtime: target-state slice (2026-04-03, код)
+- В `apps/api/src/shared/rai-chat` добавлены канонические типы и FSM: `execution-branch-lifecycle.ts`, `execution-target-state.types.ts`, `execution-target-state.bridge.ts`, `sub-intent-graph.builder.ts`.
+- `SemanticIngressService.buildFrame` всегда заполняет `subIntentGraph` (детерминированный граф поднамерений). После `buildSubIntentGraphFromSemanticFrame` вызывается `validateSubIntentGraphAntiTunnel` (`sub-intent-graph.mixed-intent-invariants.ts`): TechMap+`clarify`; паритет composite-стадий; при ≥2 `finalRequestedToolCalls` без composite-стадий и без TechMap — поле frame `explicitPlannerToolCalls` и ветки `explicit_{i}_{toolName}`, инвариант `MULTI_EXPLICIT_TOOL_PARITY` (порядок и `toolName` по индексу). Нарушения — `throw` из `buildFrame`. Спеки: mixed-intent-invariants, builder, eval, `semantic-ingress.service.spec.ts`.
+- Staged composite (`applyCompositeWorkflowStage`): при `RAI_PLANNER_RUNTIME_ENABLED` между внутренними `executeAgent` вызывается `pulsePlannerSurfaceForCompositeStep` для **CRM** (`crm.*`, три стадии) и **agro→finance** (`agro.execution_fact.finance.cost_aggregation`, две стадии) — `finalizeSurfaceFromExecution` + `advanceRunnableRootsToRunning` на `semanticIngressFrame.executionSurface`.
+- `advanceRunnableRootsToRunning` (`execution-surface-runtime.ts`): runnable только если все `dependsOn` в **COMPLETED**. После `finalizeSurfaceFromExecution` при переданном `ExecutionPlan` вызывается **`propagateCancelledForBlockedDependencies`**: PLANNED-ветки с зависимостью в FAILED или CANCELLED переводятся в CANCELLED (транзитивно); в FSM добавлен канонический переход **PLANNED→CANCELLED** (`execution-branch-lifecycle.ts`).
+- При `RAI_PLANNER_RUNTIME_ENABLED=true` `SupervisorAgent` строит `executionPlan` и `executionSurface` через `BranchSchedulerService`; переходы жизненного цикла веток на поверхности идут через `execution-surface-runtime.ts` (`buildPlanBoundSurface` → `promoteSurfaceToPlanned`, `advanceRunnableRootsToRunning` до вызова runtime, `finalizeSurfaceFromExecution` после trust-стадии, только через `applyExecutionBranchTransition`). `advanceRunnableRootsToRunning` ограничивает число одновременных RUNNING-веток значением `RuntimeGovernancePolicyService.getTrustBudget(executionRole).maxTrackedBranches`, сжимаемым env `RAI_PLANNER_MAX_CONCURRENT_BRANCHES`; в audit `plannerBranchTelemetry` добавляется `maxConcurrentBranches`. На поверхности пишется `plannerAdvanceMeta` (cap + `deferredRunnableBranchIds`); в `executionExplainability` — `policyDecision: branch_concurrency_cap` для отложенных PLANNED-веток и блок `concurrencyDeferral`; при deferral в audit — `plannerConcurrencyDeferredBranchIds` / `plannerConcurrencyCap`. `finalizeSurfaceFromExecution` сохраняет `plannerAdvanceMeta`. Снимок `BranchStatePlaneService` пишется **после** финализации поверхности. Carry-forward среза планировщика по `(companyId, threadId)` при неизменном `subIntentGraph.graphId` и незавершённом плане (`PlannerThreadSliceV1`); при `RAI_PLANNER_THREAD_PERSIST=true` — запись/чтение среза в `rai_planner_thread_states`. В ответ добавлено `executionExplainability`. Полный multi-tick composite без отдельного `executeAgent` на ветку — вне текущего среза. Интеграционный e2e: `runtime-spine.integration.spec.ts` — **Planner multi-explicit concurrency cap e2e** (`RAI_PLANNER_MAX_CONCURRENT_BRANCHES=1`, первая реплика — deferral; **второй тик** в том же `threadId` — carry-forward, 2× `executeAgent`, срез полностью `COMPLETED`); **Planner sequential multi-tick e2e** (4 сообщения / 4 `executeAgent`, срез в конце `COMPLETED`; `leadOwnerAgent` composite ≠ роль первичного агента, иначе CRM multi-`executeAgent`); **Planner multi-explicit tool e2e** (одно сообщение, два `toolCalls`, реальный ingress/`buildFrame`, spy на `executeAgent`, id веток `explicit_*` в snake_case, telemetry в audit).
+- `ResponseComposer` прокидывает `executionSurface` в `RaiChatResponseDto` для потребления UI без дублирования enum-статусов.
+- `BranchStatePlaneService` (in-memory snapshot по `traceId`), `buildBranchPlannerTelemetrySnapshot` в audit `metadata.plannerBranchTelemetry` при наличии плана/поверхности.
+- Проекция `executionSurface` в `workWindows` с русскими подписями; eval-корпус `eval/sub-intent-graph.eval.spec.ts`; регрессия маршрутизации моделей `eval/model-routing.regression.eval.spec.ts` (порядок планировщика не зависит от `RAI_ORCHESTRATOR_MODEL_ID`).
+- Тесты: плюс `branch-state-plane.service.spec.ts`, `replay-resume.integration.spec.ts`, `composer/execution-surface-projection.spec.ts`, `execution-surface.dto.spec.ts`, расширения `branch-scheduler.service.spec.ts`, `runtime-governance-policy.service.spec.ts`, блок Truthfulness в `supervisor-agent.service.spec.ts` (флаг планировщика + telemetry).
+
 - [x] `docs/00_STRATEGY/STAGE 2/rai_ep_agent_system_target_implementation_blueprint.md` полностью переписан из абстрактной программы “с нуля” в bridge-документ `current state -> gaps -> target state`.
 - [x] В документ добавлены frontmatter и `claim_id`, а сам blueprint привязан к `master-plan`, `AS-IS / TO-BE` baseline и `Phase B/C/D`.
 - [x] `docs/00_STRATEGY/STAGE 2/INDEX.md` обновлён:
@@ -2041,3 +2133,115 @@
 - Для внешнего хвоста `Phase A` добавлен `reply capture packet`: теперь между `replied` и `intake` есть канонический restricted-perimeter, куда raw owner reply и вложения раскладываются по `referenceId`, после чего используются уже конкретные файловые пути из drop-zones, а не почта и память.
 - Для внешнего хвоста `Phase A` добавлен reconciliation-слой: теперь owner queue можно сверять не только по `prepared/sent/replied`, но и по фактическому состоянию `requested/received/reviewed/accepted`, а также по наличию raw reply files в drop-zones.
 - Принято отдельное управленческое решение: внешний closeout `Phase A` временно паркуется до момента, когда программа снова будет реально рабочей; текущие checklist, board и gate-слои сохраняются как точка возврата, но дальнейшее усложнение `Phase A` до этого момента считается вторичным.
+
+## 2026-04-05 — Stage 2 strict structured runtime slice
+
+- `AgentExecutionResult` очищен от runtime-поля `text`; execution contract теперь держится на `structuredOutput` и связанных structured artifacts.
+- `AgentExecutionAdapterService`, `AgentRuntimeService` и planner/composite aggregate в `SupervisorAgent` больше не записывают prose в межагентный runtime-контур; summary сохраняется в `structuredOutput.summary`.
+- `ResponseComposer` остаётся единственным human-facing слоем, который собирает итоговый текст из structured payload, branch results и trust artifacts через `resolveAgentExecutionSummary`.
+- Локально подтверждены зелёные проверки для API/runtime и web smoke на этом срезе; default `RAI_AGENT_RUNTIME_MODE` сознательно оставлен прежним (`tool-first-legacy`) до отдельного runtime-promotion прохода, чтобы не смешивать contract migration и mode-promotion в одном changeset.
+
+## 2026-04-05 — Stage 2 planner/governed tech-map alignment
+
+- `tech_map_clarify` больше не считается вторым независимым корнем: в `sub-intent graph` ветка теперь зависит от `tech_map_core`, что выравнивает planner graph с каноном `core -> clarify`.
+- В planner tick `SupervisorAgent` добавлена жёсткая подстраховка: если tool-ветка вернула `riskPolicyBlocked`, но runtime не собрал `agentExecution`, оркестратор синтезирует governed pending-action execution локально и не даёт ветке деградировать в ложный `FAILED`.
+- Integration Prisma contour для `runtime-spine` расширен `autonomyOverride.findFirst`, потому что governed write-path проходит через `AutonomyPolicyService` до risk-gate; без этого test contour падал preflight-ошибкой и маскировал planner semantics.
+- На этом срезе снова согласованы `Supervisor`, planner surface, composer windows и web smoke для governed `tech_map` / monitoring путей.
+
+## 2026-04-05 — Stage 2 runtime default closer to ideal
+
+- `AgentRuntimeService` теперь считает `agent-first-hybrid` каноническим default path; `tool-first-legacy` остаётся только как явный override через env.
+- При этом `WRITE/CRITICAL` по-прежнему не bypass-ят governance: `requiresGovernedToolPath()` возвращает их в central tool/governed contour.
+- Дополнительно закрыт config-gating bypass для explicit blocked tools: если kernel/runtime config вырезал запрошенный tool, runtime теперь возвращает structured `agentConfigBlocked`, а не деградирует в implicit hybrid fallback соответствующего агента.
+- Этот срез подтверждён targeted API/runtime + web smoke проверками.
+
+## 2026-04-05 — Stage 2 ingress vocabulary cleanup
+
+- Canonical `SemanticIngressFrame.requestedOperation.source` переведён на нейтральные значения `fallback_normalization`, `semantic_route_primary`, `semantic_route_shadow`; старые `legacy_contracts` / `semantic_router_*` оставлены только как boundary/UI compatibility aliases для исторических данных.
+- `SemanticIngressService.resolveSource()` и user-facing labels/web client синхронизированы под новый vocabulary без поломки control-tower trace и chat smoke.
+- Тестовые фикстуры builder/planner/semantic-ingress/supervisor/explainability переведены на новый canonical source-layer.
+
+## 2026-04-05 — Stage 2 execution-path vocabulary cleanup
+
+- Core runtime execution path переведён на канонические имена `explicit_tool_path`, `fallback_interpretation`, `semantic_route_primary`.
+- `AgentExecutionAdapterService`, `AgentRuntimeService`, `SupervisorAgent`, `ResponseComposer` и shared DTO/runtime contracts больше не используют `tool_call_primary` / `heuristic_fallback` / `semantic_router_primary` как внутренние execution-path значения.
+- Старые execution-path literals сохранены только как compatibility aliases на boundary DTO/UI слое, чтобы исторические trace payload и web smoke не ломались при чтении старых данных.
+- Локально подтверждены зелёные targeted проверки для `agent-execution-adapter`, `response-composer`, `supervisor-agent`, `runtime-spine` и web smoke (`ui-language`, `control-tower-trace-page`, `rai-chat-thread-response-smoke`, `ai-chat-store`).
+
+## 2026-04-05 — Stage 2 semantic-router core vocabulary cleanup
+
+- `SemanticRouterService` и shared semantic-routing contracts переведены на канонические core-значения `semantic_route_primary` / `semantic_route_shadow`.
+- `IntentClassification.method`, `SemanticRoutingEvaluation.executionPath`, `SemanticIngressService.resolveSource()` и связанные runtime/spec/eval контуры больше не требуют `semantic_router_*` как внутреннюю правду ядра.
+- Исторические `semantic_router_primary` / `semantic_router_shadow` сохранены только как compatibility aliases в boundary-типаx и UI labels для чтения старых trace payload.
+- Дополнительно синхронизирован `rai-chat.service.spec.ts`: test harness теперь отражает текущие runtime-governance/trust contracts и не падает на устаревших пустых mock-объектах.
+
+## 2026-04-05 — Stage 2 baseline-classification canonicalization
+
+- В semantic-router / semantic-ingress / routing-telemetry контуре введён канонический `baselineClassification` как primary field для pre-semantic classification state.
+- `SemanticRoutingRequest`, `RoutingTelemetryEvent`, `RoutingCaseMemoryService` и `SemanticIngressService.buildFrame()` теперь используют `baselineClassification` первым, а `legacyClassification` сохранён только как compatibility alias для старых payload и тестовых фикстур.
+- `SupervisorAgent.planExecution()` уже передаёт в semantic/runtime spine именно canonical `baselineClassification`, не делая `legacyClassification` источником истины внутри core path.
+- Подтверждены зелёные targeted проверки для `semantic-router`, `semantic-ingress`, `runtime-spine`, `supervisor-agent`, `rai-chat.service` и web smoke.
+
+## 2026-04-05 — Stage 2 baseline-route-key canonicalization
+
+- `RoutingDivergence` и semantic-router core теперь формируют канонический `baselineRouteKey`, а не `legacyRouteKey`.
+- Старое поле `legacyRouteKey` сохранено как compatibility alias в divergence payload для старых trace/spec fixtures, но больше не является единственным canonical именем.
+- Этот срез подтверждён зелёными `tsc` и targeted semantic/runtime suites.
+
+## 2026-04-05 — Stage 2 server contract alias squeeze
+
+- Server-side shared contracts очищены от старых execution-path aliases: `AgentExecutionResult`, `RaiIntermediateStepDto` и `SemanticRoutingEvaluation` теперь типизируются только каноническими значениями (`explicit_tool_path`, `fallback_interpretation`, `semantic_route_primary`, `semantic_route_shadow`).
+- Исторические `tool_call_primary`, `heuristic_fallback`, `semantic_router_primary`, `semantic_router_shadow` оставлены только на web/client boundary для чтения старых payload и UI labels.
+- Explainability и branch-trust eval контуры синхронизированы под новый server-side contract.
+
+## 2026-04-05 — Stage 2 method alias removal and explainability baseline shift
+
+- Server-side `IntentClassification.method` больше не допускает исторические `tool_call_primary` и `semantic_router_*`: ядро API теперь использует только `regex`, `llm`, `explicit_tool_path`, `clarification_resume`, `semantic_route_shadow`, `semantic_route_primary`.
+- `SemanticIngressService.resolveSource()` очищен от legacy method aliases и определяет source только по каноническим `explicit_tool_path` / `semantic_route_shadow`.
+- `ExplainabilityPanelService` и routing divergence DTO переведены на `baselineClassification` / `baselineRouteKey` как primary truth; `legacyClassification` и `legacyRouteKey` остаются только как fallback для чтения исторических trace payload.
+- Под это выровнены targeted API/web suites, включая control-tower страницу и explainability/spec контур.
+
+## 2026-04-05 — Stage 2 web boundary primary vocabulary cleanup
+
+- Web primary DTO unions и label maps больше не содержат `semantic_router_*` и `tool_call_primary` как канонические значения.
+- В `ui-language.ts` исторические aliases теперь живут только в нормализаторе отображения: старые trace payload сначала сводятся к `semantic_route_*` / `explicit_tool_path` / `fallback_interpretation`, а потом уже рендерятся через канонические label maps.
+- `apps/web/lib/api.ts` сохраняет в `TraceForensicsSemanticIngressFrameDto.requestedOperation.source` только канонические source значения плюс `legacy_contracts` как исторический ingress-source alias.
+- На этом срезе зелёные web smoke/control-tower suites и `api tsc`.
+
+## 2026-04-05 — Stage 2 live compatibility emission squeeze
+
+- Live semantic/planner path больше не дублирует `legacyClassification` в новые routing telemetry events: `SupervisorAgent.planExecution()` и `SemanticRouterService.evaluate()` передают и эмитят только `baselineClassification`, а compatibility alias остаётся лишь для чтения старых payload.
+- `SemanticRouterService.buildDivergence()` больше не записывает `legacyRouteKey` в новые divergence snapshots; это поле осталось optional только как historical-read fallback.
+- `RoutingCaseMemoryService.retrieveRelevantCases()` и live semantic-router вызовы больше не требуют `legacyClassification` как часть текущего execution contract; для нового пути используется только `baselineClassification`.
+- Под это заново подтверждены зелёные targeted suites для `supervisor-agent`, `semantic-ingress`, `semantic-router`, `explainability-panel`, `runtime-spine` и `api tsc`.
+
+## 2026-04-05 — Stage 2 strategy truth-sync after ideal-alignment pass
+
+- `rai_ep_agent_system_target_implementation_blueprint.md` синхронизирован с фактическим кодом после ideal-alignment pass: в нём теперь явно отражены JSON-only runtime, очищенный primary vocabulary, historical-read fallback и live emission без `legacyClassification` / `legacyRouteKey`.
+- `rai_ep_agent_system_ideal_canon.md` обновлён как честный ideal reference: документ теперь фиксирует, что repo существенно приблизился к идеалу по состоянию на `2026-04-05`, но сам по себе не считается доказательством полного буквального совпадения.
+- Docs-gates (`lint:docs`, `lint:docs:matrix:strict`) зелёные после синхронизации стратегии с кодом.
+
+## 2026-04-05 — Stage 2 canonical-only live semantic request contract
+
+- `SemanticRoutingRequest` и `SemanticIngressService.buildFrame()` больше не принимают `legacyClassification` как live request/build поле; канонический входной контракт для нового semantic/planner path — только `baselineClassification`.
+- Semantic/runtime спеки и eval harness переведены на этот контракт; historical routing corpora при этом продолжают читаться через локальный loader-bridge, который нормализует `legacyClassification -> baselineClassification` на входе eval.
+- В результате `legacyClassification` остался только в shared telemetry/read model и historical-read helpers, а не в live execution/build API.
+
+## 2026-04-05 — Stage 2 end-to-end compatibility tail closeout
+
+- `legacyRouteKey` удалён из shared core `RoutingDivergence`; canonical telemetry type теперь несёт только `baselineRouteKey`.
+- Historical-read поддержка `legacyClassification` / `legacyRouteKey` локализована в `ExplainabilityPanelService` через compatibility-helper'ы, работающие поверх raw historical audit payload. Эти поля больше не являются частью канонического shared runtime/telemetry контракта.
+- `tech-map-rebuild-draft-ingress.params.ts` переведён на `baselineRouteKey`, а semantic/eval harness продолжает читать старые corpora только через loader-bridge.
+- End-to-end proof-пакет после этого прохода зелёный: `api tsc`, targeted API runtime/semantic/explainability suites, web smoke/control-tower suites, `lint:docs`, `lint:docs:matrix:strict`.
+
+## 2026-04-05 — Stage 2 final verification closeout
+
+- `AGENT_TARGET_BLUEPRINT_IMPLEMENTATION_SLICE_CLOSEOUT_2026-04-04.md` расширен ideal-alignment addendum: теперь execution-след явно фиксирует cleaned runtime vocabulary, canonical-only live request/build contracts и boundary-localized historical compatibility.
+- `INDEX.md` Stage 2 синхронизирован с этим состоянием и указывает на repo-side bridge closeout уже в редакции `2026-04-05`.
+- Финальный `rg` по non-test code показывает, что `legacyClassification` / `legacyRouteKey` остались только внутри локального historical-read helper в `ExplainabilityPanelService`; это и есть допустимый минимальный compatibility-tail после closeout.
+
+## 2026-04-05 — Stage 2 literal ideal closeout in live code
+
+- Последний historical-read helper в `ExplainabilityPanelService` удалён; сервис и его спеки переведены на чистый `baseline*` vocabulary.
+- Финальный `rg -n 'legacyClassification|legacyRouteKey' apps/api/src apps/web --glob '!**/*.spec.ts' --glob '!**/*.json'` возвращает пустой результат.
+- Это означает, что в non-test code больше нет legacy routing/classification полей вообще; они сохранены только в historical test/eval corpus слое и не участвуют в runtime архитектуре.
